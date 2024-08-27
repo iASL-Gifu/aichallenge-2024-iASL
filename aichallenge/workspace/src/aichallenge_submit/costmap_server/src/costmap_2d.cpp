@@ -1,5 +1,7 @@
 #include "costmap_2d.hpp"
 #include <cmath>
+#include <iomanip>  // std::setprecisionのために必要
+#include <fstream>  // ofstreamのために必要
 
 namespace costmap_server
 {
@@ -11,7 +13,7 @@ CostMap2D::CostMap2D() : Node("costmap_2d"), get_map_(false)
     this->declare_parameter("inflation_radius", 2.0);
     inflation_radius_ = this->get_parameter("inflation_radius").as_double();
 
-    this->declare_parameter("wall_width", 0.5);
+    this->declare_parameter("wall_width", 2.0);
     wall_width_ = this->get_parameter("wall_width").as_double();
 
     this->declare_parameter("color", 2);
@@ -69,7 +71,7 @@ void CostMap2D::send_map_request()
             origin_x_ = map_.info.origin.position.x;
             origin_y_ = map_.info.origin.position.y;
 
-            createInflationLayer(map_);
+            createInflationLayer();
 
             // map_.infoの情報を表示
             // RCLCPP_INFO(this->get_logger(), "=========================================");
@@ -105,6 +107,10 @@ std::tuple<int, int, int, int> CostMap2D::calculateIndex(
     if (x_end >= width_) x_end = width_ - 1;
     if (y_end >= height_) y_end = height_ - 1;
 
+    RCLCPP_INFO(this->get_logger(), "---------------------------------------------------------------------");
+    RCLCPP_INFO(this->get_logger(), "x_m: %f, y_m: %f", x_m /resolution_, y_m / resolution_);
+    RCLCPP_INFO(this->get_logger(), "x_start: %d, x_end: %d, y_start: %d, y_end: %d", x_start, x_end, y_start, y_end);
+
     return {x_start, x_end, y_start, y_end};
 }
 
@@ -117,6 +123,7 @@ void CostMap2D::object_callback(const std_msgs::msg::Float64MultiArray::SharedPt
 
     nav_msgs::msg::OccupancyGrid costmap = map_; // コストマップを初期化
     std::vector<double> data = msg->data;
+    std::vector<int8_t> array = std::vector<int8_t>(map_.data.size(), 0);
 
     for (size_t i = 0; i < data.size(); i += 4) {
         double center_x = data[i] - origin_x_;
@@ -127,29 +134,64 @@ void CostMap2D::object_callback(const std_msgs::msg::Float64MultiArray::SharedPt
 
         for (auto y = y_start; y < y_end; y++) {
             for (auto x = x_start; x < x_end; x++) {
-                if (hypot(x * resolution_ - center_x, y * resolution_ - center_y) < radius) {
+                if (std::sqrt((x * resolution_ - center_x) * (x * resolution_ - center_x) +
+                            (y * resolution_ - center_y) * (y * resolution_ - center_y)) < radius) {
                     int index = y * width_ + x;
-                    costmap.data[index] = 100;  // 障害物セルの値を設定
+                    array[index] = 100;  // 障害物セルの値を設定
                 }
             }
         }
     }
 
-    // createInflationLayer(costmap);
+    createInflationLayer(array, costmap);
 
     // コストマップをパブリッシュ
     costmap_2d_pub_->publish(costmap);
 }
 
-void CostMap2D::createInflationLayer(nav_msgs::msg::OccupancyGrid & map)
+void CostMap2D::createInflationLayer()
 {
-    std::vector<int8_t> copy_data = map.data;
+    std::vector<int8_t> copy_data = map_.data;
     // マップのすべてのセルを探索する
-    for (uint32_t map_x = 0; map_x < map.info.width; map_x++) {
-        for (uint32_t map_y = 0; map_y < map.info.height; map_y++) {
+    for (uint32_t map_x = 0; map_x < width_; map_x++) {
+        for (uint32_t map_y = 0; map_y < height_; map_y++) {
             // 物体を検知したときだけ処理をする
-            if (copy_data[map.info.width * map_y + map_x ] == 100) {                
-                calculateInflation(map, map_x, map_y);
+            if (copy_data[width_ * map_y + map_x ] == 100) {                
+                calculateInflation(map_x, map_y);
+            }
+        }
+    }
+}
+
+void CostMap2D::createInflationLayer(
+    std::vector<int8_t> & obstacle_map, nav_msgs::msg::OccupancyGrid & costmap)
+{
+    // マップのすべてのセルを探索する
+    for (uint32_t map_x = 0; map_x < width_; map_x++) {
+        for (uint32_t map_y = 0; map_y < height_; map_y++) {
+            // 物体を検知したときだけ処理をする
+            if (obstacle_map[width_ * map_y + map_x ] == 100) {                
+                calculateInflation(costmap, map_x, map_y);
+            }
+        }
+    }
+}
+
+
+void CostMap2D::calculateInflation(const uint32_t & map_x, const uint32_t & map_y)
+{
+    auto center_x = map_x * resolution_;
+    auto center_y = map_y * resolution_;
+    auto [x_start, x_end, y_start, y_end] = calculateIndex(center_x, center_y, wall_width_);
+
+    // 正方形の範囲を探索
+    for (auto y = y_start; y < y_end; y++) {
+        for (auto x = x_start; x < x_end; x++) {
+            double distance = std::sqrt((map_x - x) * (map_x - x) + (map_y - y) * (map_y - y)) * resolution_;
+            if (distance < wall_width_) {
+                double cost = (1.0 - (distance / wall_width_)) * 100.0;
+                int index = y * width_ + x;
+                map_.data[index] = std::max(map_.data[index], static_cast<int8_t>(cost));
             }
         }
     }
@@ -160,36 +202,17 @@ void CostMap2D::calculateInflation(
 {
     auto center_x = map_x * resolution_;
     auto center_y = map_y * resolution_;
-    auto [x_start, x_end, y_start, y_end] = calculateIndex(center_x, center_y, wall_width_);
-    // インデックスから距離に変換
+    auto [x_start, x_end, y_start, y_end] = calculateIndex(center_x, center_y, inflation_radius_);
 
     // 正方形の範囲を探索
-    for (auto y = y_start; y < y_end; y++) {
-        // int8_t value = static_cast<int8_t>((255.0 * y / (map.info.height - 1)) - 128);
-        for (auto x = x_start; x < x_end; x++) {
-            // if (0 <= x <= 20) {
-            //     RCLCPP_INFO(this->get_logger(), "============xxxx=========%d====================", x);
-            // }
-            // if (hypot(x - map_x, y - map_y) < inflation_radius_) {
-            //     //  map.data.at(): data配列からデータを取得する。範囲外のインデックスを指定した場合は例外をスローする
-            //     try {
-            //         map.data.at(y * map.info.width + x);
-            //     } catch (const std::out_of_range & e) {
-            //         continue;
-            //     }
-
-            //     // 尤度場と同じ計算。各ピクセルで物体がいる確率がどれくらいかを表す
-            //     if (
-            //     normalizeCost(
-            //         calculateCost(0., inflation_radius_),
-            //         calculateCost(hypot(x - map_x, y - map_y), inflation_radius_)) >
-            //     map.data[y * map.info.width + x]) {
-            //     map.data[y * map.info.width + x] = normalizeCost(
-            //         calculateCost(0., inflation_radius_),
-            //         calculateCost(hypot(x - map_x, y - map_y), inflation_radius_));
-            //     }
-            // }
-            map.data[y * map.info.width + x] = color_;
+    for (auto y = y_start; y <= y_end; y++) {  // y_endを含むように修正
+        for (auto x = x_start; x <= x_end; x++) {  // x_endを含むように修正
+            double distance = std::sqrt((map_x - x) * (map_x - x) + (map_y - y) * (map_y - y)) * resolution_;
+            if (distance < inflation_radius_) {
+                int index = y * width_ + x;
+                double cost = (1.0 - (distance / inflation_radius_)) * 100.0;
+                map.data[index] = std::max(map.data[index], static_cast<int8_t>(cost));
+            }
         }
     }
 }

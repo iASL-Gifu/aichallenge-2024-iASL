@@ -23,9 +23,13 @@ private:
 
     void object_callback(const std_msgs::msg::Float64MultiArray::SharedPtr msg);
     void send_map_request();
-    void createInflationLayer(nav_msgs::msg::OccupancyGrid & map);
+    void createInflationLayer();
+    void createInflationLayer(
+        std::vector<int8_t> & obstacle_map, nav_msgs::msg::OccupancyGrid & costmap
+    );
     void calculateInflation(
         nav_msgs::msg::OccupancyGrid & map, const uint32_t & map_x, const uint32_t & map_y);
+    void calculateInflation(const uint32_t & map_x, const uint32_t & map_y);
     double calculateCost(double stochastic_variable, double inflation_radius);
     double normalizeCost(double max_cost, double cost);
     std::tuple<int, int, int, int> calculateIndex(

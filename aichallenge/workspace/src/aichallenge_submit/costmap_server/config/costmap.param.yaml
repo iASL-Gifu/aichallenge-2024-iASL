@@ -1,5 +1,5 @@
 /**:
   ros__parameters:
+    inflation_radius: 2.0
     wall_width: 1.0
-    inflation_radius: 1.0
     color: 100
