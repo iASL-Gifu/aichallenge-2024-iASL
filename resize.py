@@ -1,58 +1,48 @@
-from PIL import Image
-import yaml
+import matplotlib.pyplot as plt
 
-# ベースとなる名前（拡張子以外の部分）
-base_name = 'modified_occupancy_grid_map'
+# 例としてxとyの座標をリストで用意します
+x_values = [
+    89647.304042, 89647.286796, 89647.269468, 89647.252078,
+    89647.234647, 89647.217196, 89647.199747, 89647.182322, 89647.164940,
+    89647.147624, 89647.130394, 89647.113272, 89647.096278, 89647.079433,
+    89647.062758, 89647.046273, 89647.029998, 89647.013952, 89646.998156,
+    89646.982628, 89646.967388, 89646.952454, 89646.937845, 89646.923577,
+    89646.909669
+]
 
-# 画像ファイルのパスとファイル名
-input_image_path = './aichallenge/workspace/src/aichallenge_submit/aichallenge_submit_launch/map/occupancy_grid_map.pgm'
-output_image_path = f'./{base_name}.pgm'
+y_values = [
+    43141.924223, 43141.926904, 43141.928982, 43141.930453,
+    43141.931317, 43141.931572, 43141.931217, 43141.930254, 43141.928683,
+    43141.926507, 43141.923728, 43141.920349, 43141.916374, 43141.911809,
+    43141.906659, 43141.900930, 43141.894629, 43141.887764, 43141.880344,
+    43141.872376, 43141.863871, 43141.854840, 43141.845293, 43141.835242,
+    43141.824699
+]
 
-# YAMLファイルのパスとファイル名
-input_yaml_path = './aichallenge/workspace/src/aichallenge_submit/aichallenge_submit_launch/map/occupancy_grid_map.yaml'
-output_yaml_path = f'./{base_name}.yaml'
+center = [89647.218622, 43141.431574]
 
-# .pgmファイルを開く
-image = Image.open(input_image_path)
+# カラーマップを用意します（色のリスト）
+colors = plt.cm.jet(range(len(x_values)))
 
-# 既存の画像サイズを取得
-original_width, original_height = image.size
+# プロットの作成
+plt.figure(figsize=(10, 6))
 
-# 上に追加する高さ (ピクセル単位)
-up = 10
+# xとyをそれぞれ異なる色でプロット
+for i in range(len(x_values)):
+    plt.scatter(x_values[i], y_values[i], color=colors[i])
 
-# 新しい画像の高さ（既存の高さ + 追加する高さ）
-new_height = original_height + up
+# centerのポイントを黒でプロット
+plt.scatter(center[0], center[1], color='black', label='Center', s=100)
 
-# 新しい画像を作成（ここではモノクロなので「L」モードを使用）
-new_image = Image.new('L', (original_width, new_height), color=0)  # 255 は白色、0 は黒色
+# 軸ラベルの設定
+plt.xlabel('X Coordinate')
+plt.ylabel('Y Coordinate')
 
-# 新しい画像に元の画像を貼り付ける（新しい画像の上部に空白を追加）
-new_image.paste(image, (0, up))
+# グリッドの表示
+plt.grid(True)
 
-# 新しい.pgmファイルとして保存
-new_image.save(output_image_path)
+# 凡例を表示
+plt.legend()
 
-# .yaml ファイルを読み込む
-with open(input_yaml_path, 'r') as file:
-    config = yaml.safe_load(file)
-
-# .yaml の origin 値を修正
-# up の値と resolution を使用して新しい Y 座標を計算
-resolution = config['resolution']
-origin_y = config['origin'][1]
-new_origin_y = origin_y - (up * resolution)
-
-# 修正した Y 座標を設定
-config['origin'][1] = new_origin_y
-
-# 新しい画像パスを設定
-config['image'] = f'{base_name}.pgm'
-
-# 新しい .yaml ファイルとして保存
-with open(output_yaml_path, 'w') as file:
-    yaml.dump(config, file, default_flow_style=False)
-
-print(f"New image saved to {output_image_path}")
-print("New origin y-coordinate:", new_origin_y)
-print(f"Updated YAML saved to {output_yaml_path}")
+# プロットの表示
+plt.show()

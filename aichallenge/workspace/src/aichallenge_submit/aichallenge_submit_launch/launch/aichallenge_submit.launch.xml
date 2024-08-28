@@ -21,7 +21,7 @@
 
   <!-- map server -->
   <include file="$(find-pkg-share aichallenge_submit_launch)/launch/map_server.launch.py">
-    <arg name="map_yaml_file" value="$(find-pkg-share aichallenge_submit_launch)/map/map.yaml" />
+    <arg name="map_yaml_file" value="$(find-pkg-share aichallenge_submit_launch)/map/iASL_map.yaml" />
     <arg name="use_namespace" value="true" />
     <arg name="namespace" value="/ogm" />
   </include>

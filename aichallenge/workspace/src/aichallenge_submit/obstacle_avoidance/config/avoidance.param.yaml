@@ -1,16 +1,22 @@
 /**:
   ros__parameters:
-    threshold: 220.0
+    threshold: 20.0 # 消す
     attract: 15.0
     repulse: 500.0
-    penalty_dist: 1.0
+    penalty_dist: 1.5 # 消す
+    forward_dist: 7.0
+    side_dist: 1.2
 
-    desired_dist: 0.5
+    desired_dist: 1.0
     start_index: 5
-    num_change_points: 10
-    lookahead_dist: 2.0
+    num_change_points: 20
+    lookahead_dist: 1.5
 
     angle_interval: 2.0
     max_angle: 24.0
     min_angle: -24.0
-    near_point_dist: 1.0
+    near_point_dist: 6.28 # 消す
+    margin: 20
+
+    visual: true
+    visual_angle: 0.0

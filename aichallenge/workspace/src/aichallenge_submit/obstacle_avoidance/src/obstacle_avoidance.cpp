@@ -1,6 +1,8 @@
 #include "obstacle_avoidance.hpp"
 #include "tf2/utils.h"
 #include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
+#include <cmath>
+#include <utility>
 
 namespace obstacle_avoidance
 {
@@ -25,7 +27,14 @@ ObstacleAvoidance::ObstacleAvoidance() : Node("obstacle_avoidance"), costmap_rec
 
     avoidance_path_pub_ = this->create_publisher<PathWithLaneId>("output", 1);
 
+    const auto qos = rclcpp::QoS(rclcpp::KeepLast(1)).reliable();
+    costmap_2d_pub_ = this->create_publisher<nav_msgs::msg::OccupancyGrid>(
+        "costmap_2d_2", qos
+    );
+
     // パラメータの読み込み
+
+    // TODO: 消す
     this->declare_parameter("threshold", 10.0);
     threshold_ = this->get_parameter("threshold").as_double();
 
@@ -35,8 +44,9 @@ ObstacleAvoidance::ObstacleAvoidance() : Node("obstacle_avoidance"), costmap_rec
     this->declare_parameter("repulse", 10.0);
     repulse_ = this->get_parameter("repulse").as_double();
 
-    this->declare_parameter("penalty", 10.0);
-    penalty_dist_ = this->get_parameter("penalty").as_double();
+    // TODO:
+    this->declare_parameter("penalty_dist", 10.0);
+    penalty_dist_ = this->get_parameter("penalty_dist").as_double();
 
     this->declare_parameter("desired_dist", 10.0);
     desired_dist_ = this->get_parameter("desired_dist").as_double();
@@ -59,12 +69,30 @@ ObstacleAvoidance::ObstacleAvoidance() : Node("obstacle_avoidance"), costmap_rec
     this->declare_parameter("min_angle", 10.0);
     min_angle_ = this->get_parameter("min_angle").as_double();
 
+    // TODO
     this->declare_parameter("near_point_dist", 10.0);
     near_point_dist_ = this->get_parameter("near_point_dist").as_double();
+
+    this->declare_parameter("margin", 10);
+    margin_ = this->get_parameter("margin").as_int();
+
+    this->declare_parameter("forward_dist", 10.0);
+    forward_dist_ = this->get_parameter("forward_dist").as_double();
+
+    this->declare_parameter("side_dist", 10.0);
+    side_dist_ = this->get_parameter("side_dist").as_double();
+
+    this->declare_parameter("visual", true);
+    visual_ = this->get_parameter("visual").as_bool();
+
+    this->declare_parameter("visual_angle", 10.0);
+    visual_angle_ = this->get_parameter("visual_angle").as_double();
 
     for (double i = min_angle_; i <= max_angle_; i += angle_interval_) {
         angles.push_back(i);
     }
+
+    RCLCPP_INFO(this->get_logger(), "============= aaaa ==============");
 }
 
 void ObstacleAvoidance::costmap_callback(const nav_msgs::msg::OccupancyGrid::SharedPtr msg) {
@@ -87,18 +115,6 @@ void ObstacleAvoidance::odometry_callback(const nav_msgs::msg::Odometry::SharedP
 
     if (!(costmap_received_ && path_received_)) {
         return;
-    }
-
-    // threshold以上のコストをもつx,y座標の配列を格納
-    // TODO: object以外のox, oyを毎回計算する必要はない
-    std::vector<double> ox, oy;
-    for (size_t i = 0; i < width_; i++) {
-        for (size_t j = 0; j < height_; j++) {
-            if (costmap_.data[j * width_ + i] > threshold_) {
-                ox.push_back(origin_x_ + i * resolution_);
-                oy.push_back(origin_y_ + j * resolution_);
-            }
-        }
     }
     
     // 回避を開始する点を取得
@@ -153,10 +169,10 @@ void ObstacleAvoidance::odometry_callback(const nav_msgs::msg::Odometry::SharedP
         for (const double angle : angles) {
             double angle_rad = (angle * M_PI) / 180.0;
             double new_x = x + desired_dist_ * cos(theta + angle_rad);
-            double new_y = x + desired_dist_ * sin(theta + angle_rad);
+            double new_y = y + desired_dist_ * sin(theta + angle_rad);
 
             double attract = compute_attractive_potential(new_x, new_y, goal_x, goal_y);
-            double repulse = compute_repulsive_potential(new_x, new_y, ox, oy);
+            double repulse = compute_repulsive_potential(new_x, new_y, theta + angle_rad);
             double potential = attract_ * attract + repulse_ * repulse;
 
             potentials.push_back(potential);
@@ -166,11 +182,20 @@ void ObstacleAvoidance::odometry_callback(const nav_msgs::msg::Odometry::SharedP
         double angle_rad = (angles[max_index] * M_PI) / 180.0;
 
         std::vector<double> orientation;
-        euler_to_quaternion(0, 0, angle_rad, orientation);
+        euler_to_quaternion(0, 0, angle_rad + theta, orientation);
+
+        // TODO: 消す
+        // double sample_x = x + desired_dist_ * cos(theta + angle_rad);
+        // double sample_y = y + desired_dist_ * sin(theta + angle_rad);
+        // double sample_angel = angles[max_index];
+
+        // if (counter_ < aa) {
+        //     RCLCPP_INFO(this->get_logger(), "next_x: %f, next_y: %f, next_angle: %f", sample_x, sample_y, sample_angel);
+        // }
 
         PathPointWithLaneId next_point = PathPointWithLaneId();
-        next_point.point.pose.position.x = x * desired_dist_ * cos(theta + angle_rad);
-        next_point.point.pose.position.y = y * desired_dist_ * sin(theta + angle_rad);
+        next_point.point.pose.position.x = x + desired_dist_ * cos(theta + angle_rad);
+        next_point.point.pose.position.y = y + desired_dist_ * sin(theta + angle_rad);
         next_point.point.pose.position.z = 43.1;
 
         next_point.point.pose.orientation.x = orientation[0];
@@ -188,13 +213,13 @@ void ObstacleAvoidance::odometry_callback(const nav_msgs::msg::Odometry::SharedP
         generate_paths_.push_back(next_point);
     }
 
-    // TODO: 最後のステップに一番近いpointを探す
-    int min_goal_index = 0;
+    // 最後のステップに一番近いpointを探す
+    int min_goal_index = 100;
     double min_dist = std::numeric_limits<double>::infinity();
 
-    double x = generate_paths_[-1].point.pose.position.x;
-    double y = generate_paths_[-1].point.pose.position.y;
-    for (size_t i = start_index; i < path_.points.size(); i++) {
+    double x = generate_paths_[num_change_points_].point.pose.position.x;
+    double y = generate_paths_[num_change_points_].point.pose.position.y;
+    for (size_t i = start_index + margin_; i < path_.points.size(); i++) {
         double dist = std::sqrt(
             std::pow(path_.points[i].point.pose.position.x - x, 2) +
             std::pow(path_.points[i].point.pose.position.y - y, 2));
@@ -207,26 +232,29 @@ void ObstacleAvoidance::odometry_callback(const nav_msgs::msg::Odometry::SharedP
         }
     }
 
+    // RCLCPP_INFO(this->get_logger(), "=======%d=======", min_goal_index);
+
     PathWithLaneId new_path = PathWithLaneId();
     new_path.header = path_.header;
     new_path.left_bound = path_.left_bound;
     new_path.right_bound = path_.right_bound;
+
     // before path
     for (size_t i = 0; i < start_index; i++) {
         new_path.points.push_back(path_.points[i]);
     }
-
     // generate path
     for (size_t i = 0; i < generate_paths_.size(); i++) {
         new_path.points.push_back(generate_paths_[i]);
     }
-
     // after path
     for (size_t i = min_goal_index; i < path_.points.size(); i++) {
         new_path.points.push_back(path_.points[i]);
     }
 
     avoidance_path_pub_->publish(new_path);
+
+    counter_++;
 }
 
 double ObstacleAvoidance::compute_attractive_potential(double x, double y, double gx, double gy) {
@@ -235,16 +263,53 @@ double ObstacleAvoidance::compute_attractive_potential(double x, double y, doubl
     return 1.0 / std::sqrt(std::pow(x - gx, 2) + std::pow(y - gy, 2));
 }
 
-double ObstacleAvoidance::compute_repulsive_potential(double x, double y, const std::vector<double>& ox, const std::vector<double>& oy) {
-    // 障害物との距離が任意距離より近いと減点
+// TODO: 消す
+// double ObstacleAvoidance::compute_repulsive_potential(double x, double y, const std::vector<double>& ox, const std::vector<double>& oy) {
+//     // 障害物との距離が任意距離より近いと減点
+
+//     double repulse = 0.0;
+//     for (size_t i = 0; i < ox.size(); ++i) {
+//         double dist = std::sqrt(std::pow(x - ox[i], 2) + std::pow(y - oy[i], 2));
+//         if (dist < penalty_dist_) {
+//             repulse += -1.0 / dist;
+//         }
+//     }
+
+//     return repulse;
+// }
+
+double ObstacleAvoidance::compute_repulsive_potential(double x, double y, double theta)
+{
+    // インデックスを計算
+    int x_start = (x - side_dist_ - origin_x_) / resolution_;
+    int x_end = (x + side_dist_ - origin_x_) / resolution_;
+    int y_start = (y - origin_y_) / resolution_;
+    int y_end = (y + forward_dist_ - origin_y_) / resolution_;
+
+    int center_x = (x - origin_x_) /resolution_;
+    int center_y = y_start;
 
     double repulse = 0.0;
-    for (size_t i = 0; i < ox.size(); ++i) {
-        double dist = std::sqrt(std::pow(x - ox[i], 2) + std::pow(y - oy[i], 2));
-        if (dist < penalty_dist_) {
-            repulse += -1.0 / dist;
+    nav_msgs::msg::OccupancyGrid costmap = costmap_;
+
+    for (int i = x_start; i < x_end; i++) {
+        for (int j = y_start; j < y_end; j++) {
+            std::pair<int, int> rotated_point = rotatePoint(i, j, theta - 1.75, center_x, center_y);
+            int new_x = rotated_point.first;
+            int new_y = rotated_point.second;
+            int index = new_y * width_ + new_x;
+
+            if (new_x >= 0 && new_x < width_ && new_y >= 0 && new_y < height_) {
+                repulse -= costmap_.data[index];
+            }
+
+            if (visual_ && (i == x_start || i == x_end - 1 || j == y_start || j == y_end - 1)) {
+                costmap.data[index] = 127;
+            }
         }
     }
+
+    costmap_2d_pub_->publish(costmap);
 
     return repulse;
 }
@@ -274,36 +339,23 @@ void ObstacleAvoidance::euler_to_quaternion(double phi, double theta, double psi
     return;
 }
 
-// double ObstacleAvoidance::compute_attractive_potential(
-//     geometry_msgs::msg::Pose &start_pose, geometry_msgs::msg::Pose &end_pose)
-// {
-//     // ゴールとの距離が小さいほど評価が高い
-//     start_x = start_pose.position.x;
-//     start_y = start_pose.position.y;
-//     end_x = end_pose.position.x;
-//     end_y = end_pose.position.y;
+std::pair<int, int> ObstacleAvoidance::rotatePoint(double x, double y, double theta, double center_x, double center_y)
+{
+    // 座標を中心からの相対位置に変換
+    double rel_x = x - center_x;
+    double rel_y = y - center_y;
 
-//     return 1.0 - / std::sqrt(std::pow(start_x - end_x, 2) + std::pow(start_y, end_y, 2));
-// }
+    // 相対位置で回転を適用
+    double x_new = rel_x * std::cos(theta) - rel_y * std::sin(theta);
+    double y_new = rel_x * std::sin(theta) + rel_y * std::cos(theta);
 
-// double ObstacleAvoidance::compute_repulsive_potential(
-//     geometry_msgs::msg::Pose &start_pose,
-//     const std::vector<double> &ox, const std::vector<double> &oy)
-// {
-//     // 障害物との距離が任意距離より近いと減点
-//     double repulse = 0.0;
-//     for (size_t i = 0; i < ox.size(); i++) {
-//         double dist = std::sqrt(
-//             std::pow(start_pose.position.x - ox[i], 2) +
-//             std::pow(start_pose.position.y - oy[i], 2));
+    // 元の位置に戻す
+    x_new += center_x;
+    y_new += center_y;
 
-//         if (dist < penalty_dist_) {
-//             repulse += -1.0 / dist;
-//         }
-//     }
+    return std::make_pair(std::floor(x_new), std::floor(y_new));
+}
 
-//     return repulse;
-// }
 }
 
 int main(int argc, char **argv){

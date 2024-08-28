@@ -39,6 +39,7 @@ private:
     nav_msgs::msg::OccupancyGrid map_;
     double inflation_radius_;
     double wall_width_;
+    double min_value_;
     bool get_map_;
     double width_, height_;
     double origin_x_, origin_y_;

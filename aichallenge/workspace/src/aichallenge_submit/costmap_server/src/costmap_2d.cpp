@@ -16,6 +16,9 @@ CostMap2D::CostMap2D() : Node("costmap_2d"), get_map_(false)
     this->declare_parameter("wall_width", 2.0);
     wall_width_ = this->get_parameter("wall_width").as_double();
 
+    this->declare_parameter("min_value", 2.0);
+    min_value_ = this->get_parameter("min_value").as_double();
+
     const auto qos = rclcpp::QoS(rclcpp::KeepLast(1)).reliable();
     costmap_2d_pub_ = this->create_publisher<nav_msgs::msg::OccupancyGrid>(
         "costmap_2d", qos
@@ -182,7 +185,7 @@ void CostMap2D::calculateInflation(const uint32_t & map_x, const uint32_t & map_
         for (auto x = x_start; x < x_end; x++) {
             double distance = std::sqrt((map_x - x) * (map_x - x) + (map_y - y) * (map_y - y)) * resolution_;
             if (distance < wall_width_) {
-                double cost = (1.0 - (distance / wall_width_)) * 100.0;
+                double cost = (1.0 - (distance / inflation_radius_)) * min_value_ + (100 - min_value_);
                 int index = y * width_ + x;
                 map_.data[index] = std::max(map_.data[index], static_cast<int8_t>(cost));
             }
@@ -203,7 +206,7 @@ void CostMap2D::calculateInflation(
             double distance = std::sqrt((map_x - x) * (map_x - x) + (map_y - y) * (map_y - y)) * resolution_;
             if (distance < inflation_radius_) {
                 int index = y * width_ + x;
-                double cost = (1.0 - (distance / inflation_radius_)) * 100.0;
+                double cost = (1.0 - (distance / inflation_radius_)) * min_value_ + (100 - min_value_);
                 map.data[index] = std::max(map.data[index], static_cast<int8_t>(cost));
             }
         }
