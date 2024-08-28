@@ -37,13 +37,19 @@ private:
     );
 
     nav_msgs::msg::OccupancyGrid map_;
-    double inflation_radius_;
-    double wall_width_;
-    double min_value_;
     bool get_map_;
     double width_, height_;
     double origin_x_, origin_y_;
     double resolution_;
+
+    double outside_cost_;
+    double wall_inflation_radius_;
+    double wall_min_cost_, wall_max_cost_;
+
+    double object_inside_cost_;
+    double object_inside_radius_;
+    double object_inflation_radius_;
+    double object_min_cost_, object_max_cost_;
 };
 }
 
