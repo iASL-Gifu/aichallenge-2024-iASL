@@ -16,9 +16,6 @@ CostMap2D::CostMap2D() : Node("costmap_2d"), get_map_(false)
     this->declare_parameter("wall_width", 2.0);
     wall_width_ = this->get_parameter("wall_width").as_double();
 
-    this->declare_parameter("color", 2);
-    color_ = this->get_parameter("color").as_int();
-
     const auto qos = rclcpp::QoS(rclcpp::KeepLast(1)).reliable();
     costmap_2d_pub_ = this->create_publisher<nav_msgs::msg::OccupancyGrid>(
         "costmap_2d", qos
@@ -106,10 +103,6 @@ std::tuple<int, int, int, int> CostMap2D::calculateIndex(
     if (y_start <= 0) y_start = 0;
     if (x_end >= width_) x_end = width_ - 1;
     if (y_end >= height_) y_end = height_ - 1;
-
-    RCLCPP_INFO(this->get_logger(), "---------------------------------------------------------------------");
-    RCLCPP_INFO(this->get_logger(), "x_m: %f, y_m: %f", x_m /resolution_, y_m / resolution_);
-    RCLCPP_INFO(this->get_logger(), "x_start: %d, x_end: %d, y_start: %d, y_end: %d", x_start, x_end, y_start, y_end);
 
     return {x_start, x_end, y_start, y_end};
 }

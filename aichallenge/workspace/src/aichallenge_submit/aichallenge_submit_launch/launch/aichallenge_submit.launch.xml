@@ -19,14 +19,21 @@
     <param from="$(find-pkg-share goal_pose_setter)/config/default_goal_pose.param.yaml" />
   </node>
 
+  <!-- map server -->
   <include file="$(find-pkg-share aichallenge_submit_launch)/launch/map_server.launch.py">
     <arg name="map_yaml_file" value="$(find-pkg-share aichallenge_submit_launch)/map/map.yaml" />
     <arg name="use_namespace" value="true" />
     <arg name="namespace" value="/ogm" />
   </include>
 
+  <!-- costmap publisher -->
   <node pkg="costmap_server" exec="costmap_node" name="costmap_2d" output="screen">
     <param from="$(find-pkg-share costmap_server)/config/costmap.param.yaml" />
+  </node>
+
+  <!-- obstacle avoidance -->
+  <node pkg="obstacle_avoidance" exec="obstacle_avoidance" name="obstacle_avoidance" output="screen">
+    <param from="$(find-pkg-share obstacle_avoidance)/config/avoidance.param.yaml" />
   </node>
 
 </launch>

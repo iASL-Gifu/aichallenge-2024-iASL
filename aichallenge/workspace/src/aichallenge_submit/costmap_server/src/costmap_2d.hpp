@@ -43,9 +43,6 @@ private:
     double width_, height_;
     double origin_x_, origin_y_;
     double resolution_;
-
-    int top_margin_, bottom_margin_, left_margin_, right_margin_;
-    int color_;
 };
 }
 
