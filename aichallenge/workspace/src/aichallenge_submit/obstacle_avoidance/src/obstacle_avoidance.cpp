@@ -168,7 +168,7 @@ void ObstacleAvoidance::odometry_callback(const nav_msgs::msg::Odometry::SharedP
         std::vector<double> orientation;
         euler_to_quaternion(0, 0, angle_rad, orientation);
 
-        PathPointWithLaneId next_point;
+        PathPointWithLaneId next_point = PathPointWithLaneId();
         next_point.point.pose.position.x = x * desired_dist_ * cos(theta + angle_rad);
         next_point.point.pose.position.y = y * desired_dist_ * sin(theta + angle_rad);
         next_point.point.pose.position.z = 43.1;
@@ -207,7 +207,7 @@ void ObstacleAvoidance::odometry_callback(const nav_msgs::msg::Odometry::SharedP
         }
     }
 
-    PathWithLaneId new_path;
+    PathWithLaneId new_path = PathWithLaneId();
     new_path.header = path_.header;
     new_path.left_bound = path_.left_bound;
     new_path.right_bound = path_.right_bound;
