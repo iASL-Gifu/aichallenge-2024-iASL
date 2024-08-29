@@ -230,7 +230,7 @@
     <node pkg="scenario_pub_pkg" exec="scenario_pub_node" name="scenario_pub_node" output="screen">
 
         <param name="ConditionThreshold" value="1000" />  <!-- pit stopのフラグをたてるしきい値 -->
-        <param name="UseStatusCondition" value="true" />  <!-- sectionの値をpit stopフラグに利用するかどうか。true: secton 8　かつ condition>=1000のときpit-->
+        <param name="UseStatusCondition" value="false" />  <!-- sectionの値をpit stopフラグに利用するかどうか。true: secton 8　かつ condition>=1000のときpit-->
 
         <remap from="/condition" to="/aichallenge/pitstop/condition"/>
         <remap from="/status" to="/aichallenge/awsim/status"/>
@@ -259,7 +259,7 @@
       <arg name="vehicle_param_file" default="$(find-pkg-share racing_kart_description)/config/vehicle_info.param.yaml"/>
 
       <include file="$(find-pkg-share freespace_planner)/launch/freespace_planner.launch.xml">
-        <!-- <arg name="input_route" value="/planning/scenario_planning/route"/> -->
+        <!-- <arg name="input_route" value="/planning/scenario_planning/route"/>  -->
         <arg name="input_route" value="/planning/mission_planning/route"/>
         <arg name="input_occupancy_grid" value="costmap_generator/occupancy_grid"/>
         <arg name="input_scenario" value="/planning/pit_stop/scenario"/>
