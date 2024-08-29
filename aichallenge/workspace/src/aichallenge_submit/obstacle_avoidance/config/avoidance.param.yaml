@@ -7,16 +7,16 @@
     forward_dist: 3.0
     side_dist: 1.0
 
-    desired_dist: 1.5
-    start_index: 5
-    num_change_points: 20
+    desired_dist: 1.0
+    start_index: 10
+    num_change_points: 10
     lookahead_dist: 1.5
 
     angle_interval: 2.0
     max_angle: 24.0
     min_angle: -24.0
     near_point_dist: -129.0 # 消す
-    margin: 20
+    margin: 10
 
     visual: true
     visual_angle: 0.0

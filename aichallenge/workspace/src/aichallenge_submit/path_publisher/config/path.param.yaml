@@ -1,0 +1,6 @@
+/**:
+  ros__parameters:
+    csv_path: "/aichallenge/workspace/src/aichallenge_submit/path_publisher/csv/centerline.csv"
+    downsample_rate: 5
+    loop_count: 7
+    publish_rate: 100

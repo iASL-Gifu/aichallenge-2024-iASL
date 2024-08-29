@@ -40,4 +40,9 @@
   <node pkg="path_visualizer" exec="path_visualizer" name="path_visualizer" output="screen">
   </node>
 
+  <!-- path publisher -->
+  <node pkg="path_publisher" exec="path_publisher" name="path_publisher" output="screen">
+    <param from="$(find-pkg-share path_publisher)/config/path.param.yaml" />
+  </node>
+
 </launch>
