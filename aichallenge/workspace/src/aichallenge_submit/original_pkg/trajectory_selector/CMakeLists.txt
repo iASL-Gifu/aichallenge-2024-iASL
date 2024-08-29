@@ -10,9 +10,10 @@ find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(autoware_auto_planning_msgs REQUIRED)
 find_package(tier4_planning_msgs REQUIRED)
+find_package(std_msgs REQUIRED)
 
 add_executable(trajectory_selector_node src/trajectory_selector_node.cpp)
-ament_target_dependencies(trajectory_selector_node rclcpp tier4_planning_msgs autoware_auto_planning_msgs)
+ament_target_dependencies(trajectory_selector_node rclcpp tier4_planning_msgs autoware_auto_planning_msgs std_msgs)
 install(TARGETS trajectory_selector_node
   DESTINATION lib/${PROJECT_NAME})
 
