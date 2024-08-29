@@ -12,11 +12,11 @@
     replan_when_course_out: true
 
     time_limit: 10000.0
-    minimum_turning_radius: 6.0
+    minimum_turning_radius: 5.0
     maximum_turning_radius: 15.0
     turning_radius_size: 5
 
-    theta_size: 60
+    theta_size: 90
     angle_goal_range: 6.0
     curve_weight: 1.2
     reverse_weight: 2.0

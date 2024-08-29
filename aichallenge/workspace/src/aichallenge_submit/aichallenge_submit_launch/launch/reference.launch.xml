@@ -259,6 +259,7 @@
       <arg name="vehicle_param_file" default="$(find-pkg-share racing_kart_description)/config/vehicle_info.param.yaml"/>
 
       <include file="$(find-pkg-share freespace_planner)/launch/freespace_planner.launch.xml">
+        <!-- <arg name="input_route" value="/planning/scenario_planning/route"/> -->
         <arg name="input_route" value="/planning/mission_planning/route"/>
         <arg name="input_occupancy_grid" value="costmap_generator/occupancy_grid"/>
         <arg name="input_scenario" value="/planning/pit_stop/scenario"/>
@@ -281,7 +282,22 @@
       </node>
 
       <!-- trajectory_selector End -->
+
+       <!-- pose_publisher_node  -->
+
+      <!-- <node pkg="pose_publisher" exec="pose_publisher_node" name="pose_publisher_node" output="screen">
+
+        <param name="lookahead_index" value="100" />
+        <param name="publish_hz" value="10.0" />
+        <param name="safe_distance" value="0.0" />
+
+        <remap from="~/input/trajectory" to="/planning/scenario_planning/trajectory"/>
+        <remap from="~/input/odom" to="/localization/kinematic_state"/>
+        <remap from="~/input/objects" to="/aichallenge/objects"/>
+        <remap from="~/output/route" to="/planning/scenario_planning/route"/>
+      </node>  -->
       
+       <!-- pose_publisher_node End -->
   </group>
 
   
