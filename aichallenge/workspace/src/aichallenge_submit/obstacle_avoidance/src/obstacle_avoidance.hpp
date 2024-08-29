@@ -64,6 +64,8 @@ private:
     bool visual_;
     double visual_angle_;
 
+    double min_, max_;
+
     nav_msgs::msg::OccupancyGrid costmap_;
     double width_, height_, resolution_, origin_x_, origin_y_;
     nav_msgs::msg::Odometry odometry_;

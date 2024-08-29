@@ -88,11 +88,15 @@ ObstacleAvoidance::ObstacleAvoidance() : Node("obstacle_avoidance"), costmap_rec
     this->declare_parameter("visual_angle", 10.0);
     visual_angle_ = this->get_parameter("visual_angle").as_double();
 
+    this->declare_parameter("min", 10.0);
+    min_ = this->get_parameter("min").as_double();
+
+    this->declare_parameter("max", 10.0);
+    max_ = this->get_parameter("max").as_double();
+
     for (double i = min_angle_; i <= max_angle_; i += angle_interval_) {
         angles.push_back(i);
     }
-
-    RCLCPP_INFO(this->get_logger(), "============= aaaa ==============");
 }
 
 void ObstacleAvoidance::costmap_callback(const nav_msgs::msg::OccupancyGrid::SharedPtr msg) {
@@ -103,6 +107,9 @@ void ObstacleAvoidance::costmap_callback(const nav_msgs::msg::OccupancyGrid::Sha
     origin_x_ = costmap_.info.origin.position.x;
     origin_y_ = costmap_.info.origin.position.y;
     costmap_received_ = true;
+
+    int index = 90 * width_ + 230;
+    RCLCPP_INFO(this->get_logger(), "xxxxxxxxxxxxxxxx %d", costmap_.data[index]);
 }
 
 void ObstacleAvoidance::path_callback(const PathWithLaneId::SharedPtr msg) {
@@ -300,11 +307,19 @@ double ObstacleAvoidance::compute_repulsive_potential(double x, double y, double
             int index = new_y * width_ + new_x;
 
             if (new_x >= 0 && new_x < width_ && new_y >= 0 && new_y < height_) {
+                // double aaa = costmap_.data[index];
+                // if (aaa != 127) {
+                //     repulse -= costmap_.data[index];
+                // }
+                // double cost = costmap_.data[index];
+                // if (cost > min_ && cost < max_) {
+                //     repulse++;
+                // }
                 repulse -= costmap_.data[index];
             }
 
             if (visual_ && (i == x_start || i == x_end - 1 || j == y_start || j == y_end - 1)) {
-                costmap.data[index] = 127;
+                costmap.data[index] = near_point_dist_;
             }
         }
     }

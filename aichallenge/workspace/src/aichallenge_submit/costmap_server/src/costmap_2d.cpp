@@ -10,50 +10,49 @@ CostMap2D::CostMap2D() : Node("costmap_2d"), get_map_(false)
 {
     RCLCPP_INFO(this->get_logger(), "================== Cost Map =======================");
 
-    this->declare_parameter("outside_cost", 2.0);
-    outside_cost_ = this->get_parameter("outside_cost").as_double();
-
-    RCLCPP_INFO(this->get_logger(), "================== Cost Map bbbb =======================");
+    this->declare_parameter("outside_cost", 2);
+    outside_cost_ = this->get_parameter("outside_cost").as_int();
 
     this->declare_parameter("wall_inflation_radius", 2.0);
     wall_inflation_radius_ = this->get_parameter("wall_inflation_radius").as_double();
 
-    RCLCPP_INFO(this->get_logger(), "================== Cost Map cccc =======================");
+    this->declare_parameter("wall_min_cost", 2);
+    wall_min_cost_ = this->get_parameter("wall_min_cost").as_int();
 
-    this->declare_parameter("wall_min_cost", 2.0);
-    wall_min_cost_ = this->get_parameter("wall_min_cost").as_double();
+    this->declare_parameter("wall_max_cost", 2);
+    wall_max_cost_ = this->get_parameter("wall_max_cost").as_int();
 
-    RCLCPP_INFO(this->get_logger(), "================== Cost Map dddd =======================");
-
-    this->declare_parameter("wall_max_cost", 2.0);
-    wall_max_cost_ = this->get_parameter("wall_max_cost").as_double();
-
-    RCLCPP_INFO(this->get_logger(), "================== Cost Map eeee =======================");
-
-    this->declare_parameter("object_inside_cost", 2.0);
-    object_inside_cost_ = this->get_parameter("object_inside_cost").as_double();
-
-    RCLCPP_INFO(this->get_logger(), "================== Cost Map ffff =======================");
+    this->declare_parameter("object_inside_cost", 2);
+    object_inside_cost_ = this->get_parameter("object_inside_cost").as_int();
 
     this->declare_parameter("object_inside_radius", 2.0);
     object_inside_radius_ = this->get_parameter("object_inside_radius").as_double();
 
-    RCLCPP_INFO(this->get_logger(), "================== Cost Map gggg =======================");
+    // this->declare_parameter("inside_min_cost", 2);
+    // inside_min_cost_ = this->get_parameter("inside_min_cost").as_int();
+
+    // this->declare_parameter("inside_max_cost", 2);
+    // inside_max_cost_ = this->get_parameter("inside_max_cost").as_int();
 
     this->declare_parameter("object_inflation_radius", 2.0);
     object_inflation_radius_ = this->get_parameter("object_inflation_radius").as_double();
 
-    RCLCPP_INFO(this->get_logger(), "================== Cost Map hhhh =======================");
+    this->declare_parameter("object_min_cost", 2);
+    object_min_cost_ = this->get_parameter("object_min_cost").as_int();
 
-    this->declare_parameter("object_min_cost", 2.0);
-    object_min_cost_ = this->get_parameter("object_min_cost").as_double();
+    this->declare_parameter("object_max_cost", 2);
+    object_max_cost_ = this->get_parameter("object_max_cost").as_int();
 
-    RCLCPP_INFO(this->get_logger(), "================== Cost Map iiii =======================");
+    this->declare_parameter("sample", 2);
+    sample_ = this->get_parameter("sample").as_int();
 
-    this->declare_parameter("object_max_cost", 2.0);
-    object_max_cost_ = this->get_parameter("object_max_cost").as_double();
+    this->declare_parameter("aa", 2);
+    aa_ = this->get_parameter("aa").as_int();
 
-    RCLCPP_INFO(this->get_logger(), "================== Cost Map zzzz =======================");
+    this->declare_parameter("bb", 2);
+    bb_ = this->get_parameter("bb").as_int();
+
+    RCLCPP_INFO(this->get_logger(), "================== Cost Map xxxx =======================");
 
     const auto qos = rclcpp::QoS(rclcpp::KeepLast(1)).reliable();
     costmap_2d_pub_ = this->create_publisher<nav_msgs::msg::OccupancyGrid>(
@@ -82,7 +81,6 @@ CostMap2D::CostMap2D() : Node("costmap_2d"), get_map_(false)
         std::bind(&CostMap2D::send_map_request, this)
     );
 
-    RCLCPP_INFO(this->get_logger(), "================== Cost Map xxxx =======================");
 }
 
 void CostMap2D::send_map_request()
@@ -126,6 +124,14 @@ void CostMap2D::send_map_request()
             //             map_.info.origin.orientation.z, 
             //             map_.info.origin.orientation.w);
 
+            // for (uint32_t map_x = 0; map_x < width_; map_x++) {
+            //     for (uint32_t map_y = 0; map_y < height_; map_y++) {
+            //         int index = map_y * width_ + map_x;
+            //         map_.data[index] = 0;
+            //     }
+            // }
+            // int index = bb_ * width_ + aa_;
+            // map_.data[index] = sample_;
         }
     };
 
@@ -163,17 +169,23 @@ void CostMap2D::object_callback(const std_msgs::msg::Float64MultiArray::SharedPt
         double center_x = data[i] - origin_x_;
         double center_y = data[i + 1] - origin_y_;
 
+        int x_index = center_x / resolution_;
+        int y_index = center_y / resolution_;
+
         auto [x_start, x_end, y_start, y_end] = calculateIndex(center_x, center_y, object_inside_radius_);
 
-        for (auto y = y_start; y < y_end; y++) {
-            for (auto x = x_start; x < x_end; x++) {
-                if (std::sqrt((x * resolution_ - center_x) * (x * resolution_ - center_x) +
-                            (y * resolution_ - center_y) * (y * resolution_ - center_y)) < object_inside_radius_) {
-                    int index = y * width_ + x;
-                    array[index] = object_inside_cost_;  // 障害物セルの値を設定
-                }
-            }
-        }
+        // for (auto y = y_start; y < y_end; y++) {
+        //     for (auto x = x_start; x < x_end; x++) {
+        //         double distance = std::sqrt((x_index - x) * (x_index - x) + (y_index - y) * (y_index - y)) * resolution_;
+        //         if (distance < object_inside_radius_) {
+        //             int index = y * width_ + x;
+        //             array[index] = object_inside_cost_;  // 障害物セルの値を設定
+        //         }
+        //     }
+        // }
+
+        int index = y_index * width_ + x_index;
+        array[index] = object_inside_cost_;
     }
 
     createInflationLayer(array, costmap);
@@ -251,7 +263,7 @@ void CostMap2D::calculateInflation(
                 double distance = std::sqrt((map_x - x) * (map_x - x) + (map_y - y) * (map_y - y)) * resolution_;
                 if (distance < object_inflation_radius_) {
                     double cost = object_min_cost_ + (object_max_cost_ - object_min_cost_) * (1.0 - (distance / object_inflation_radius_));
-                    map.data[index] = std::max(map_.data[index], static_cast<int8_t>(cost));
+                    map.data[index] = std::max(map.data[index], static_cast<int8_t>(cost));
                 }
             }
         }

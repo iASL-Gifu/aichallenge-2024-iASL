@@ -42,14 +42,18 @@ private:
     double origin_x_, origin_y_;
     double resolution_;
 
-    double outside_cost_;
+    int outside_cost_;
     double wall_inflation_radius_;
-    double wall_min_cost_, wall_max_cost_;
+    int wall_min_cost_, wall_max_cost_;
 
-    double object_inside_cost_;
+    int object_inside_cost_;
     double object_inside_radius_;
+    int inside_min_cost_, inside_max_cost_;
     double object_inflation_radius_;
-    double object_min_cost_, object_max_cost_;
+    int object_min_cost_, object_max_cost_;
+
+    int sample_;
+    int aa_, bb_;
 };
 }
 
