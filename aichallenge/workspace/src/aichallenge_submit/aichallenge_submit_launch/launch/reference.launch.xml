@@ -299,8 +299,8 @@
 
       <!-- <node pkg="trajectory_selector" exec="trajectory_selector_node" name="trajectory_selector_node" output="screen">
         <remap from="/scenario" to="/planning/pit_stop/scenario"/>
-        <remap from="/trajectory_avoidance" to="/planning/scenario_planning/avoidance/trajectory"/>
-        <remap from="/trajectory_lane" to="/planning/scenario_planning/trajectory"/>
+        <remap from="/trajectory_pit" to="/planning/scenario_planning/trajectory"/>
+        <remap from="/trajectory_lane" to="/planning/scenario_planning/avoidance/trajectory"/>
         <remap from="/selected_trajectory" to="/planning/scenario_planning/selected_trajectory"/>
       </node> -->
 
@@ -333,6 +333,8 @@
 
     <remap from="input/kinematics" to="/localization/kinematic_state"/>
     <remap from="input/trajectory" to="/planning/scenario_planning/trajectory"/>
+    <remap from="input/trajectory" to="/planning/scenario_planning/avoidance/trajectory"/>
+          
     <remap from="output/control_cmd" to="/control/command/control_cmd"/>
   </node> -->
 
