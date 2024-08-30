@@ -158,8 +158,8 @@ void PathPublisher::path_callback(const nav_msgs::msg::Path::SharedPtr msg) {
     double x = msg->poses[0].pose.position.x;
     double y = msg->poses[0].pose.position.y;
 
-    RCLCPP_INFO(this->get_logger(), "yyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy");
-    RCLCPP_INFO(this->get_logger(), "Index 0 Position: x: %f, y: %f", x, y);
+    // RCLCPP_INFO(this->get_logger(), "yyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy");
+    // RCLCPP_INFO(this->get_logger(), "Index 0 Position: x: %f, y: %f", x, y);
 
     nav_msgs::msg::Path new_path;
     new_path.poses.clear();
@@ -184,7 +184,7 @@ void PathPublisher::path_callback(const nav_msgs::msg::Path::SharedPtr msg) {
 
     new_path.poses.assign(msg->poses.begin() + index, msg->poses.end());
 
-    RCLCPP_INFO(this->get_logger(), "Index 0 Position: x: %f, y: %f", new_path.poses[0].pose.position.x, new_path.poses[0].pose.position.y);
+    // RCLCPP_INFO(this->get_logger(), "Index 0 Position: x: %f, y: %f", new_path.poses[0].pose.position.x, new_path.poses[0].pose.position.y);
 
     path_pub_->publish(new_path);
 }

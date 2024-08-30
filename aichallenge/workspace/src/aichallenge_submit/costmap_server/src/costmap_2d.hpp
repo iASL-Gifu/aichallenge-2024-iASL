@@ -6,6 +6,7 @@
 #include "std_msgs/msg/float64_multi_array.hpp"
 #include "nav_msgs/srv/get_map.hpp"
 #include "nav_msgs/msg/occupancy_grid.hpp"
+#include "nav_msgs/msg/path.hpp"
 
 namespace costmap_server
 {
@@ -18,9 +19,11 @@ public:
 private:
     rclcpp::Publisher<nav_msgs::msg::OccupancyGrid>::SharedPtr costmap_2d_pub_;
     rclcpp::Subscription<std_msgs::msg::Float64MultiArray>::SharedPtr obstacle_sub_;
+    rclcpp::Subscription<nav_msgs::msg::Path>::SharedPtr path_sub_;
     rclcpp::Client<nav_msgs::srv::GetMap>::SharedPtr get_map_client_;
     rclcpp::TimerBase::SharedPtr timer_;
 
+    void path_callback(const nav_msgs::msg::Path::SharedPtr msg);
     void object_callback(const std_msgs::msg::Float64MultiArray::SharedPtr msg);
     void send_map_request();
     void createInflationLayer();
@@ -51,8 +54,7 @@ private:
     double object_inflation_radius_;
     int object_min_cost_, object_max_cost_;
 
-    int sample_;
-    int aa_, bb_;
+    double object_long_side_, object_short_side_;
 };
 }
 

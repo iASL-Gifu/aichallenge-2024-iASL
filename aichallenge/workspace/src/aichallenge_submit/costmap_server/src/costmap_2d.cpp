@@ -37,14 +37,11 @@ CostMap2D::CostMap2D() : Node("costmap_2d"), get_map_(false)
     this->declare_parameter("object_max_cost", 2);
     object_max_cost_ = this->get_parameter("object_max_cost").as_int();
 
-    this->declare_parameter("sample", 2);
-    sample_ = this->get_parameter("sample").as_int();
+    this->declare_parameter("object_long_side", 2.0);
+    object_long_side_ = this->get_parameter("object_long_side").as_double();
 
-    this->declare_parameter("aa", 2);
-    aa_ = this->get_parameter("aa").as_int();
-
-    this->declare_parameter("bb", 2);
-    bb_ = this->get_parameter("bb").as_int();
+    this->declare_parameter("object_short_side", 2.0);
+    object_short_side_ = this->get_parameter("object_short_side").as_double();
 
     RCLCPP_INFO(this->get_logger(), "================== Cost Map xxxx =======================");
 

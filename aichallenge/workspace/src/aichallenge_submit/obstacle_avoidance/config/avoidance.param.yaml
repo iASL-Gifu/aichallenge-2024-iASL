@@ -7,10 +7,10 @@
     forward_dist: 3.0
     side_dist: 1.0
 
-    desired_dist: 1.0
-    start_index: 10
+    desired_dist: 0.8
+    start_index: 20
     num_change_points: 20
-    lookahead_dist: 1.5
+    lookahead_dist: 0.5
 
     angle_interval: 2.0
     max_angle: 24.0

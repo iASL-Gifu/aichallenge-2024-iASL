@@ -495,6 +495,8 @@ double ObstacleAvoidance::compute_repulsive_potential(double x, double y, double
     double repulse = 0.0;
     nav_msgs::msg::OccupancyGrid costmap = costmap_;
 
+    bool flag = false;
+
     for (int i = x_start; i < x_end; i++) {
         for (int j = y_start; j < y_end; j++) {
             std::pair<int, int> rotated_point = rotatePoint(i, j, theta - 1.75, center_x, center_y);
@@ -503,15 +505,12 @@ double ObstacleAvoidance::compute_repulsive_potential(double x, double y, double
             int index = new_y * width_ + new_x;
 
             if (new_x >= 0 && new_x < width_ && new_y >= 0 && new_y < height_) {
-                // double aaa = costmap_.data[index];
-                // if (aaa != 127) {
-                //     repulse -= costmap_.data[index];
-                // }
-                // double cost = costmap_.data[index];
-                // if (cost > min_ && cost < max_) {
-                //     repulse++;
-                // }
-                repulse -= costmap_.data[index];
+                int cost = costmap_.data[index];
+                repulse -= cost;
+                if (cost != 127 && cost != 0) {
+                    flag = true;
+                    // RCLCPP_INFO(this->get_logger(), "jjjjjjjjjjjj");
+                }
             }
 
             if (visual_ && (i == x_start || i == x_end - 1 || j == y_start || j == y_end - 1)) {
@@ -520,7 +519,15 @@ double ObstacleAvoidance::compute_repulsive_potential(double x, double y, double
         }
     }
 
+    if (!flag) {
+        repulse = 0.0;
+    }
+
     costmap_2d_pub_->publish(costmap);
+
+    if (repulse != 0.0) {
+        RCLCPP_INFO(this->get_logger(), "repulse: %d", repulse);
+    }
 
     return repulse;
 }
