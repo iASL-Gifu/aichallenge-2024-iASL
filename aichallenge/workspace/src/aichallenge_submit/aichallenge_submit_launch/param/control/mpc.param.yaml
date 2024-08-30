@@ -7,7 +7,7 @@
     admissible_yaw_error_rad: 1.57 # stop mpc calculation when error is larger than the following value
 
     # -- path smoothing --
-    enable_path_smoothing: false # flag for path smoothing
+    enable_path_smoothing: true # flag for path smoothing
     path_filter_moving_ave_num: 25 # param of moving average filter for path smoothing
     curvature_smoothing_num_traj: 15 # point-to-point index distance used in curvature calculation (for trajectory): curvature is calculated from three points p(i-num), p(i), p(i+num)
     curvature_smoothing_num_ref_steer: 15 # point-to-point index distance used in curvature calculation (for steer command reference): curvature is calculated from three points p(i-num), p(i), p(i+num)
@@ -31,7 +31,7 @@
     mpc_low_curvature_weight_heading_error: 0.0 # heading error weight in matrix Q in low curvature point
     mpc_low_curvature_weight_heading_error_squared_vel: 0.0  #0.3 # heading error * velocity weight in matrix Q in low curvature point
     mpc_low_curvature_weight_steering_input: 0.0 #1.0 # steering error weight in matrix R in low curvature point
-    mpc_low_curvature_weight_steering_input_squared_vel: 0.0 #0.25 # steering error * velocity weight in matrix R in low curvature point
+    mpc_low_curvature_weight_steering_input_squared_vel: 0.1 #0.25 # steering error * velocity weight in matrix R in low curvature point
     mpc_low_curvature_weight_lat_jerk: 0.0 # lateral jerk weight in matrix R in low curvature point
     mpc_low_curvature_weight_steer_rate: 0.0 # steering rate weight in matrix R in low curvature point
     mpc_low_curvature_weight_steer_acc: 0.000001 # steering angular acceleration weight in matrix R in low curvature point
@@ -46,7 +46,7 @@
     # -- vehicle model --
     vehicle_model_type: "kinematics" # vehicle model type for mpc prediction. option is kinematics, kinematics_no_delay, and dynamics
     input_delay: 0.01 # steering input delay time for delay compensation
-    vehicle_model_steer_tau: 0.15 # steering dynamics time constant (1d approximation) [s]
+    vehicle_model_steer_tau: 0.10 #0.30 # steering dynamics time constant (1d approximation) [s]
     steer_rate_lim_dps: 600.0 # steering angle rate limit [deg/s]
     acceleration_limit: 3.2 # 2.0 # acceleration limit for trajectory velocity modification [m/ss]
     velocity_time_constant: 0.3 # velocity dynamics time constant  for trajectory velocity modification [s]
