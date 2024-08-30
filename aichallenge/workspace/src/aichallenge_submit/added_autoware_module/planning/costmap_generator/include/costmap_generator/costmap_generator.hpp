@@ -67,6 +67,7 @@
 #endif
 #include <tf2_ros/buffer.h>
 #include <tf2_ros/transform_listener.h>
+#include <std_msgs/msg/int32.hpp>
 
 #include <memory>
 #include <string>
@@ -119,6 +120,10 @@ private:
   rclcpp::Subscription<autoware_auto_mapping_msgs::msg::HADMapBin>::SharedPtr sub_lanelet_bin_map_;
   rclcpp::Subscription<tier4_planning_msgs::msg::Scenario>::SharedPtr sub_scenario_;
 
+  rclcpp::Subscription<std_msgs::msg::Int32>::SharedPtr section_change_subscriber_;
+
+   
+
   rclcpp::TimerBase::SharedPtr timer_;
 
   tf2_ros::Buffer tf_buffer_;
@@ -130,6 +135,7 @@ private:
   ObjectsToCostmap objects2costmap_;
 
   tier4_planning_msgs::msg::Scenario::ConstSharedPtr scenario_;
+  std::shared_ptr<std_msgs::msg::Int32> section_event_;
 
   struct LayerName
   {
@@ -158,6 +164,8 @@ private:
   void onScenario(const tier4_planning_msgs::msg::Scenario::ConstSharedPtr msg);
 
   void onTimer();
+
+  void sectionChangeCallback(const std_msgs::msg::Int32::SharedPtr msg);
 
   bool isActive();
 

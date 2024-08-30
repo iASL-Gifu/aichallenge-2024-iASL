@@ -28,7 +28,7 @@ private:
         publish_event(45); // 4->5 の場合は 45
       }
       // セクションが8から0に変わった場合
-      else if (previous_section_ == 8 && current_section == 0)
+      else if (previous_section_ == 8 && current_section == 1)
       {
         publish_event(80); // 8->0 の場合は 80
       }

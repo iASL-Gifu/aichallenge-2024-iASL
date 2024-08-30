@@ -207,6 +207,11 @@ CostmapGenerator::CostmapGenerator(const rclcpp::NodeOptions & node_options)
   sub_scenario_ = this->create_subscription<tier4_planning_msgs::msg::Scenario>(
     "~/input/scenario", 1, std::bind(&CostmapGenerator::onScenario, this, _1));
 
+  // セクション変化のサブスクリプションを作成
+  section_change_subscriber_ = this->create_subscription<std_msgs::msg::Int32>(
+    "~/input/section_change", 10, std::bind(&CostmapGenerator::sectionChangeCallback, this, _1));
+
+
   // Publishers
   pub_costmap_ = this->create_publisher<grid_map_msgs::msg::GridMap>("~/output/grid_map", 1);
   pub_occupancy_grid_ =
@@ -214,8 +219,8 @@ CostmapGenerator::CostmapGenerator(const rclcpp::NodeOptions & node_options)
 
   // Timer
   const auto period_ns = rclcpp::Rate(update_rate_).period();
-  timer_ =
-    rclcpp::create_timer(this, get_clock(), period_ns, std::bind(&CostmapGenerator::onTimer, this));
+  // timer_ =
+  //   rclcpp::create_timer(this, get_clock(), period_ns, std::bind(&CostmapGenerator::onTimer, this));
 
   // Initialize
   initGridmap();
@@ -293,8 +298,10 @@ void CostmapGenerator::onScenario(const tier4_planning_msgs::msg::Scenario::Cons
   scenario_ = msg;
 }
 
-void CostmapGenerator::onTimer()
+void CostmapGenerator::sectionChangeCallback(const std_msgs::msg::Int32::SharedPtr msg)
 {
+  section_event_ = msg;
+
   if (!isActive()) {
     return;
   }
@@ -331,6 +338,45 @@ void CostmapGenerator::onTimer()
 
   publishCostmap(costmap_);
 }
+
+// void CostmapGenerator::onTimer()
+// {
+//   if (!isActive()) {
+//     return;
+//   }
+
+//   // Get current pose
+//   geometry_msgs::msg::TransformStamped tf;
+//   try {
+//     tf = tf_buffer_.lookupTransform(
+//       costmap_frame_, vehicle_frame_, rclcpp::Time(0), rclcpp::Duration::from_seconds(1.0));
+//   } catch (tf2::TransformException & ex) {
+//     RCLCPP_ERROR(this->get_logger(), "%s", ex.what());
+//     return;
+//   }
+
+//   // Set grid center
+//   grid_map::Position p;
+//   p.x() = tf.transform.translation.x;
+//   p.y() = tf.transform.translation.y;
+//   costmap_.setPosition(p);
+
+//   if ((use_wayarea_ || use_parkinglot_) && lanelet_map_) {
+//     costmap_[LayerName::primitives] = generatePrimitivesCostmap();
+//   }
+
+//   if (use_objects_ && objects_) {
+//     costmap_[LayerName::objects] = generateObjectsCostmap(objects_);
+//   }
+
+//   if (use_points_ && points_) {
+//     costmap_[LayerName::points] = generatePointsCostmap(points_);
+//   }
+
+//   costmap_[LayerName::combined] = generateCombinedCostmap();
+
+//   publishCostmap(costmap_);
+// }
 
 bool CostmapGenerator::isActive()
 {
