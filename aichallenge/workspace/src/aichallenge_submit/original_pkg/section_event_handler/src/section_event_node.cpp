@@ -30,7 +30,7 @@ private:
       // セクションが8から0に変わった場合
       else if (previous_section_ == 8 && current_section == 1)
       {
-        publish_event(80); // 8->0 の場合は 80
+        publish_event(81); // 8->0 の場合は 80
       }
 
       // 現在のセクションを記録
