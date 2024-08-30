@@ -104,6 +104,23 @@ ObstacleAvoidance::ObstacleAvoidance() : Node("obstacle_avoidance"), costmap_rec
     for (double i = min_angle_; i <= max_angle_; i += angle_interval_) {
         angles.push_back(i);
     }
+
+    ex_x_ = 0.0;
+    ex_y_ = 0.0;
+}
+
+bool ObstacleAvoidance::are_positions_equal() {
+    // RCLCPP_INFO(this->get_logger(), 
+    //         "Current Odometry Position: x: %f, y: %f, Previous Odometry Position: x: %f, y: %f", 
+    //         odometry_.pose.pose.position.x, 
+    //         odometry_.pose.pose.position.y, 
+    //         ex_x_, 
+    //         ex_y_);
+
+    double dx = odometry_.pose.pose.position.x - ex_x_;
+    double dy = odometry_.pose.pose.position.y - ex_y_;
+
+    return (std::sqrt(dx * dx + dy * dy) <= 0.01);
 }
 
 void ObstacleAvoidance::costmap_callback(const nav_msgs::msg::OccupancyGrid::SharedPtr msg) {
@@ -115,8 +132,8 @@ void ObstacleAvoidance::costmap_callback(const nav_msgs::msg::OccupancyGrid::Sha
     origin_y_ = costmap_.info.origin.position.y;
     costmap_received_ = true;
 
-    int index = 90 * width_ + 230;
-    RCLCPP_INFO(this->get_logger(), "xxxxxxxxxxxxxxxx %d", costmap_.data[index]);
+    // int index = 90 * width_ + 230;
+    // RCLCPP_INFO(this->get_logger(), "xxxxxxxxxxxxxxxx %d", costmap_.data[index]);
 }
 
 // void ObstacleAvoidance::path_callback(const PathWithLaneId::SharedPtr msg) {
@@ -127,14 +144,29 @@ void ObstacleAvoidance::costmap_callback(const nav_msgs::msg::OccupancyGrid::Sha
 void ObstacleAvoidance::path_callback(const nav_msgs::msg::Path::SharedPtr msg) {
     path_ = *msg;
     path_received_ = true;
+
+    double x = msg->poses[0].pose.position.x;
+    double y = msg->poses[0].pose.position.y;
+
+    RCLCPP_INFO(this->get_logger(), "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
+    RCLCPP_INFO(this->get_logger(), "Index 0 Position: x: %f, y: %f", x, y);
 }
 
 void ObstacleAvoidance::odometry_callback(const nav_msgs::msg::Odometry::SharedPtr msg) {
+    // RCLCPP_INFO(this->get_logger(), "Obstacle Avoidance Odometry Callback");
     odometry_ = *msg;
 
-    if (!(costmap_received_ && path_received_)) {
+    if (!costmap_received_ || !path_received_) {
         return;
     }
+
+    // RCLCPP_INFO(this->get_logger(), "zzzzzzzzzzzzzzzzzzzzzzzzzzzz");
+    if (are_positions_equal()) {
+        // RCLCPP_INFO(this->get_logger(), "xxxxxx");
+        return;
+    }
+    ex_x_ = odometry_.pose.pose.position.x;
+    ex_y_ = odometry_.pose.pose.position.y;
     
     // 回避を開始する点を取得
     auto odom_position = odometry_.pose.pose.position;
@@ -148,10 +180,10 @@ void ObstacleAvoidance::odometry_callback(const nav_msgs::msg::Odometry::SharedP
             std::pow(odom_position.y - path_position.y, 2)
         );
 
-        if (current_index < 10) {
-            RCLCPP_INFO(this->get_logger(), "zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz");
-            RCLCPP_INFO(this->get_logger(), "Point x: %f, y: %f, distance: %f", path_position.x, path_position.y, distance);
-        }
+        // if (current_index < 10) {
+        //     RCLCPP_INFO(this->get_logger(), "zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz");
+        //     RCLCPP_INFO(this->get_logger(), "Point x: %f, y: %f, distance: %f", path_position.x, path_position.y, distance);
+        // }
 
         if (distance > previous_distance) {
             current_index -= 1;
@@ -162,6 +194,7 @@ void ObstacleAvoidance::odometry_callback(const nav_msgs::msg::Odometry::SharedP
         current_index++;
     }
     size_t start_index = current_index;
+    // RCLCPP_INFO(this->get_logger(), "Obstacle Avoidance current index: %ld", current_index);
 
     generate_paths_.clear();
     generate_paths_.push_back(path_.poses[current_index]);
@@ -236,18 +269,18 @@ void ObstacleAvoidance::odometry_callback(const nav_msgs::msg::Odometry::SharedP
 
     double x = generate_paths_[num_change_points_].pose.position.x;
     double y = generate_paths_[num_change_points_].pose.position.y;
-    for (size_t i = start_index + margin_; i < path_.poses.size(); i++) {
+
+    for (size_t i = start_index; i < start_index + margin_; i++) {
         double dist = std::sqrt(
             std::pow(path_.poses[i].pose.position.x - x, 2) +
             std::pow(path_.poses[i].pose.position.y - y, 2));
 
-        if (dist <= min_dist) {
+        if (dist < min_dist) {
             min_dist = dist;
-        } else {
-            min_goal_index = i + 1;
-            break;
+            min_goal_index = i;
         }
     }
+    min_goal_index++;
 
     // RCLCPP_INFO(this->get_logger(), "=======%d=======", min_goal_index);
 
@@ -255,17 +288,25 @@ void ObstacleAvoidance::odometry_callback(const nav_msgs::msg::Odometry::SharedP
     new_path.header = path_.header;
 
     // before path
+    int count_a = 0;
     for (size_t i = 0; i < start_index; i++) {
         new_path.poses.push_back(path_.poses[i]);
+        count_a++;
     }
     // generate path
+    int count_b = 0;
     for (size_t i = 0; i < generate_paths_.size(); i++) {
         new_path.poses.push_back(generate_paths_[i]);
+        count_b++;
     }
     // after path
+    int count_c = 0;
     for (size_t i = min_goal_index; i < path_.poses.size(); i++) {
         new_path.poses.push_back(path_.poses[i]);
+        count_c++;
     }
+
+    RCLCPP_INFO(this->get_logger(), "count_a: %d, count_b: %d, count_c: %d", count_a, count_b, count_c);
 
     avoidance_path_pub_->publish(new_path);
 

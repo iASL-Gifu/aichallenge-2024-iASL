@@ -28,12 +28,6 @@ CostMap2D::CostMap2D() : Node("costmap_2d"), get_map_(false)
     this->declare_parameter("object_inside_radius", 2.0);
     object_inside_radius_ = this->get_parameter("object_inside_radius").as_double();
 
-    // this->declare_parameter("inside_min_cost", 2);
-    // inside_min_cost_ = this->get_parameter("inside_min_cost").as_int();
-
-    // this->declare_parameter("inside_max_cost", 2);
-    // inside_max_cost_ = this->get_parameter("inside_max_cost").as_int();
-
     this->declare_parameter("object_inflation_radius", 2.0);
     object_inflation_radius_ = this->get_parameter("object_inflation_radius").as_double();
 
@@ -108,30 +102,6 @@ void CostMap2D::send_map_request()
             origin_y_ = map_.info.origin.position.y;
 
             createInflationLayer();
-
-            // map_.infoの情報を表示
-            // RCLCPP_INFO(this->get_logger(), "=========================================");
-            // RCLCPP_INFO(this->get_logger(), "Map Resolution: %f", map_.info.resolution);
-            // RCLCPP_INFO(this->get_logger(), "Map Width: %u", map_.info.width);
-            // RCLCPP_INFO(this->get_logger(), "Map Height: %u", map_.info.height);
-            // RCLCPP_INFO(this->get_logger(), "Map Origin: (x: %f, y: %f, z: %f)", 
-            //             map_.info.origin.position.x, 
-            //             map_.info.origin.position.y, 
-            //             map_.info.origin.position.z);
-            // RCLCPP_INFO(this->get_logger(), "Map Orientation: (x: %f, y: %f, z: %f, w: %f)", 
-            //             map_.info.origin.orientation.x, 
-            //             map_.info.origin.orientation.y, 
-            //             map_.info.origin.orientation.z, 
-            //             map_.info.origin.orientation.w);
-
-            // for (uint32_t map_x = 0; map_x < width_; map_x++) {
-            //     for (uint32_t map_y = 0; map_y < height_; map_y++) {
-            //         int index = map_y * width_ + map_x;
-            //         map_.data[index] = 0;
-            //     }
-            // }
-            // int index = bb_ * width_ + aa_;
-            // map_.data[index] = sample_;
         }
     };
 
@@ -173,16 +143,6 @@ void CostMap2D::object_callback(const std_msgs::msg::Float64MultiArray::SharedPt
         int y_index = center_y / resolution_;
 
         auto [x_start, x_end, y_start, y_end] = calculateIndex(center_x, center_y, object_inside_radius_);
-
-        // for (auto y = y_start; y < y_end; y++) {
-        //     for (auto x = x_start; x < x_end; x++) {
-        //         double distance = std::sqrt((x_index - x) * (x_index - x) + (y_index - y) * (y_index - y)) * resolution_;
-        //         if (distance < object_inside_radius_) {
-        //             int index = y * width_ + x;
-        //             array[index] = object_inside_cost_;  // 障害物セルの値を設定
-        //         }
-        //     }
-        // }
 
         int index = y_index * width_ + x_index;
         array[index] = object_inside_cost_;

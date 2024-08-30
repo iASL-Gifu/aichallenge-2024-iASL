@@ -17,12 +17,11 @@ public:
 
 private:
     rclcpp::Publisher<nav_msgs::msg::Path>::SharedPtr path_pub_;
+    rclcpp::Subscription<nav_msgs::msg::Path>::SharedPtr path_sub_;
     rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr odometry_sub_;
-    rclcpp::TimerBase::SharedPtr timer_;
 
-    void on_timer();
     void odometry_callback(const nav_msgs::msg::Odometry::SharedPtr msg);
-
+    void path_callback(const nav_msgs::msg::Path::SharedPtr msg);
 
     nav_msgs::msg::Odometry odometry_;
 
@@ -30,12 +29,16 @@ private:
     int downsample_rate_;
     int loop_count_;
     int publish_rate_;
+    int margin_;
 
     std::vector<geometry_msgs::msg::PoseStamped> points_;
     bool csv_loaded_;
     bool path_initialized_;
     bool odometry_received_;
     int current_index_; 
+
+
+    int line_count_;
 };
 
 }

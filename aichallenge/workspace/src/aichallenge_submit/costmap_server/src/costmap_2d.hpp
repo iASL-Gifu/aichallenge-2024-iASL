@@ -48,7 +48,6 @@ private:
 
     int object_inside_cost_;
     double object_inside_radius_;
-    int inside_min_cost_, inside_max_cost_;
     double object_inflation_radius_;
     int object_min_cost_, object_max_cost_;
 

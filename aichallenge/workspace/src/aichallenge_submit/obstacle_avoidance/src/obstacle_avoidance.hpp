@@ -99,6 +99,12 @@ private:
     std::vector<geometry_msgs::msg::PoseStamped> generate_paths_;
 
     int counter_;
+
+
+
+
+    float ex_x_, ex_y_;
+    bool are_positions_equal();
 };
 
 }
