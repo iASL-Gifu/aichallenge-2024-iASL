@@ -4,9 +4,8 @@ Panels:
     Name: Displays
     Property Tree Widget:
       Expanded:
-        - /System1/Vehicle1
         - /Sensing1/LiDAR1/ConcatenatePointCloud1/Autocompute Value Bounds1
-        - /Path1/Offset1
+        - /Map2
       Splitter Ratio: 0.557669460773468
     Tree Height: 165
   - Class: rviz_common/Selection
@@ -68,36 +67,36 @@ Visualization Manager:
         - Class: rviz_common/Group
           Displays:
             - Class: rviz_plugins/SteeringAngle
-              Enabled: false
-              Left: 128
-              Length: 256
+              Enabled: true
+              Left: 800
+              Length: 100
               Name: SteeringAngle
-              Scale: 17
+              Scale: 10
               Text Color: 25; 255; 240
-              Top: 128
+              Top: 0
               Topic:
                 Depth: 5
                 Durability Policy: Volatile
                 History Policy: Keep Last
                 Reliability Policy: Reliable
                 Value: /vehicle/status/steering_status
-              Value: false
+              Value: true
               Value Scale: 0.14999249577522278
               Value height offset: 0
             - Class: rviz_plugins/ConsoleMeter
-              Enabled: false
-              Left: 512
-              Length: 256
+              Enabled: true
+              Left: 800
+              Length: 100
               Name: ConsoleMeter
               Text Color: 25; 255; 240
-              Top: 128
+              Top: 100
               Topic:
                 Depth: 5
                 Durability Policy: Volatile
                 History Policy: Keep Last
                 Reliability Policy: Reliable
                 Value: /vehicle/status/velocity_status
-              Value: false
+              Value: true
               Value Scale: 0.14999249577522278
               Value height offset: 0
             - Alpha: 0.9990000128746033
@@ -106,7 +105,7 @@ Visualization Manager:
               Constant Color:
                 Color: 255; 255; 255
                 Value: true
-              Enabled: false
+              Enabled: true
               Name: VelocityHistory
               Scale: 0.30000001192092896
               Timeout: 10
@@ -116,7 +115,7 @@ Visualization Manager:
                 History Policy: Keep Last
                 Reliability Policy: Reliable
                 Value: /vehicle/status/velocity_status
-              Value: false
+              Value: true
             - Alpha: 0.30000001192092896
               Class: rviz_default_plugins/RobotModel
               Collision Enabled: false
@@ -165,7 +164,7 @@ Visualization Manager:
             - Class: rviz_plugins/PolarGridDisplay
               Color: 255; 255; 255
               Delta Range: 10
-              Enabled: false
+              Enabled: true
               Max Alpha: 0.5
               Max Range: 100
               Max Wave Alpha: 0.5
@@ -173,33 +172,11 @@ Visualization Manager:
               Min Wave Alpha: 0.009999999776482582
               Name: PolarGridDisplay
               Reference Frame: base_link
-              Value: false
+              Value: true
               Wave Color: 255; 255; 255
               Wave Velocity: 40
-            - Class: rviz_plugins/MaxVelocity
-              Enabled: false
-              Left: 595
-              Length: 96
-              Name: MaxVelocity
-              Text Color: 255; 255; 255
-              Top: 280
-              Topic: /planning/scenario_planning/current_max_velocity
-              Value: false
-              Value Scale: 0.25
-            - Class: rviz_plugins/TurnSignal
-              Enabled: false
-              Height: 256
-              Left: 196
-              Name: TurnSignal
-              Top: 350
-              Topic:
-                Depth: 5
-                Durability Policy: Volatile
-                History Policy: Keep Last
-                Reliability Policy: Reliable
-                Value: /vehicle/status/turn_indicators_status
-              Value: false
-              Width: 512
+            
+            
           Enabled: true
           Name: Vehicle
       Enabled: true
@@ -824,7 +801,11 @@ Visualization Manager:
               Enabled: true
               Name: RouteArea
               Namespaces:
-                {}
+                goal_lanelets: true
+                lane_start_bound: false
+                left_lane_bound: false
+                right_lane_bound: false
+                route_lanelets: true
               Topic:
                 Depth: 5
                 Durability Policy: Transient Local
@@ -866,7 +847,7 @@ Visualization Manager:
                 Filter size: 10
                 History Policy: Keep Last
                 Reliability Policy: Reliable
-                Value: /planning/scenario_planning/trajectory
+                Value: /planning/scenario_planning/selected_trajectory
               Value: true
               View Footprint:
                 Alpha: 1
@@ -1227,7 +1208,8 @@ Visualization Manager:
                       Enabled: true
                       Name: Bound
                       Namespaces:
-                        {}
+                        left_bound: true
+                        right_bound: true
                       Topic:
                         Depth: 5
                         Durability Policy: Volatile
@@ -1928,10 +1910,264 @@ Visualization Manager:
               Value: true
           Enabled: false
           Name: Diagnostic
-      Enabled: false
+      Enabled: true
       Name: Planning
     - Class: rviz_common/Group
       Displays:
+
+        - Class: rviz_plugins/Float32MultiArrayStampedPieChart
+          Enabled: true
+          Name: MPC calculation result
+          Topic: /control/trajectory_follower/lateral/diagnostic
+          Value: true
+          auto color change: true
+          background alpha: 0
+          background color: 0; 0; 0
+          clockwise rotate direction: false
+          data index: 1
+          foreground alpha: 0.7
+          foreground alpha 2: 0.4
+          foreground color: 25; 255; 240  # 薄い青
+          left: 0
+          max color: 0; 200; 255  # 青
+          max color change threshold: 0
+          max value: 1
+          med color: 0; 150; 255  # やや濃い青
+          med color change threshold: 0
+          min value: 0
+          show caption: true
+          size: 100
+          text size: 7
+          top: 0
+
+        - Class: rviz_plugins/Float32MultiArrayStampedPieChart
+          Enabled: true
+          Name: Lateral error
+          Topic: /control/trajectory_follower/lateral/diagnostic
+          Value: true
+          auto color change: true
+          background alpha: 0
+          background color: 0; 0; 0
+          clockwise rotate direction: false
+          data index: 5
+          foreground alpha: 0.8
+          foreground alpha 2: 0.5
+          foreground color: 0; 150; 255  # やや濃い青
+          left: 110  # 位置を変更
+          max color: 0; 200; 255  # 青
+          max color change threshold: 0
+          max value: 1
+          med color: 0; 100; 255  # 濃い青
+          med color change threshold: 0
+          min value: 0
+          show caption: true
+          size: 100
+          text size: 7
+          top: 0  # 位置を変更
+
+        - Class: rviz_plugins/Float32MultiArrayStampedPieChart
+          Enabled: true
+          Name: current_pose yaw
+          Topic: /control/trajectory_follower/lateral/diagnostic
+          Value: true
+          auto color change: true
+          background alpha: 0
+          background color: 0; 0; 0
+          clockwise rotate direction: false
+          data index: 6
+          foreground alpha: 0.9
+          foreground alpha 2: 0.6
+          foreground color: 0; 100; 255  # 濃い青
+          left: 220  # 位置を変更
+          max color: 0; 150; 255  # やや濃い青
+          max color change threshold: 0
+          max value: 1
+          med color: 0; 50; 255  # 最も濃い青
+          med color change threshold: 0
+          min value: 0
+          show caption: true
+          size: 100
+          text size: 7
+          top: 0  # 位置を変更
+
+        - Class: rviz_plugins/Float32MultiArrayStampedPieChart
+          Enabled: true
+          Name: nearest_pose yaw
+          Topic: /control/trajectory_follower/lateral/diagnostic
+          Value: true
+          auto color change: true
+          background alpha: 0
+          background color: 0; 0; 0
+          clockwise rotate direction: false
+          data index: 7
+          foreground alpha: 0.7
+          foreground alpha 2: 0.4
+          foreground color: 0; 200; 255  # 青
+          left: 330  # 位置を変更
+          max color: 25; 255; 240  # 薄い青
+          max color change threshold: 0
+          max value: 1
+          med color: 0; 150; 255  # やや濃い青
+          med color change threshold: 0
+          min value: 0
+          show caption: true
+          size: 100
+          text size: 7
+          top: 0  # 位置を変更
+
+        - Class: rviz_plugins/Float32MultiArrayStampedPieChart
+          Enabled: true
+          Name: Yaw error
+          Topic: /control/trajectory_follower/lateral/diagnostic
+          Value: true
+          auto color change: true
+          background alpha: 0
+          background color: 0; 0; 0
+          clockwise rotate direction: false
+          data index: 8
+          foreground alpha: 0.8
+          foreground alpha 2: 0.5
+          foreground color: 0; 150; 255  # やや濃い青
+          left: 440  # 位置を変更
+          max color: 0; 100; 255  # 濃い青
+          max color change threshold: 0
+          max value: 1
+          med color: 0; 50; 255  # 最も濃い青
+          med color change threshold: 0
+          min value: 0
+          show caption: true
+          size: 100
+          text size: 7
+          top: 0  # 位置を変更
+
+
+        - Class: rviz_plugins/Float32MultiArrayStampedPieChart
+          Enabled: true
+          Name: Accel
+          Topic: /control/trajectory_follower/longitudinal/diagnostic
+          Value: true
+          auto color change: true
+          background alpha: 0
+          background color: 0; 0; 0
+          clockwise rotate direction: false
+          data index: 18
+          foreground alpha: 0.8
+          foreground alpha 2: 0.5
+          foreground color: 255; 150; 150  # やや濃い赤
+          left: 0  # 位置を変更
+          max color: 255; 100; 100  # 濃い赤
+          max color change threshold: 0
+          max value: 1
+          med color: 255; 50; 50  # 最も濃い赤
+          med color change threshold: 0
+          min value: 0
+          show caption: true
+          size: 100
+          text size: 7
+          top: 120  # 位置を変更
+
+        - Class: rviz_plugins/Float32MultiArrayStampedPieChart
+          Enabled: true
+          Name: PID_P
+          Topic: /control/trajectory_follower/longitudinal/diagnostic
+          Value: true
+          auto color change: true
+          background alpha: 0
+          background color: 0; 0; 0
+          clockwise rotate direction: false
+          data index: 19
+          foreground alpha: 0.8
+          foreground alpha 2: 0.5
+          foreground color: 255; 150; 150  # やや濃い赤
+          left: 110  # 位置を変更
+          max color: 255; 100; 100  # 濃い赤
+          max color change threshold: 0
+          max value: 1
+          med color: 255; 50; 50  # 最も濃い赤
+          med color change threshold: 0
+          min value: 0
+          show caption: true
+          size: 100
+          text size: 7
+          top: 120  # 位置を変更
+
+        - Class: rviz_plugins/Float32MultiArrayStampedPieChart
+          Enabled: true
+          Name: PID_I
+          Topic: /control/trajectory_follower/longitudinal/diagnostic
+          Value: true
+          auto color change: true
+          background alpha: 0
+          background color: 0; 0; 0
+          clockwise rotate direction: false
+          data index: 20
+          foreground alpha: 0.8
+          foreground alpha 2: 0.5
+          foreground color: 255; 150; 150  # やや濃い赤
+          left: 220  # 位置を変更
+          max color: 255; 100; 100  # 濃い赤
+          max color change threshold: 0
+          max value: 1
+          med color: 255; 50; 50  # 最も濃い赤
+          med color change threshold: 0
+          min value: 0
+          show caption: true
+          size: 100
+          text size: 7
+          top: 120  # 位置を変更
+
+        - Class: rviz_plugins/Float32MultiArrayStampedPieChart
+          Enabled: true
+          Name: PID_D
+          Topic: /control/trajectory_follower/longitudinal/diagnostic
+          Value: true
+          auto color change: true
+          background alpha: 0
+          background color: 0; 0; 0
+          clockwise rotate direction: false
+          data index: 21
+          foreground alpha: 0.8
+          foreground alpha 2: 0.5
+          foreground color: 255; 150; 150  # やや濃い赤
+          left: 330  # 位置を変更
+          max color: 255; 100; 100  # 濃い赤
+          max color change threshold: 0
+          max value: 1
+          med color: 255; 50; 50  # 最も濃い赤
+          med color change threshold: 0
+          min value: 0
+          show caption: true
+          size: 100
+          text size: 7
+          top: 120  # 位置を変更
+
+        - Class: rviz_plugins/Float32MultiArrayStampedPieChart
+          Enabled: true
+          Name: State
+          Topic: /control/trajectory_follower/longitudinal/diagnostic
+          Value: true
+          auto color change: true
+          background alpha: 0
+          background color: 0; 0; 0
+          clockwise rotate direction: false
+          data index: 13
+          foreground alpha: 0.8
+          foreground alpha 2: 0.5
+          foreground color: 255; 150; 150  # やや濃い赤
+          left: 440  # 位置を変更
+          max color: 255; 100; 100  # 濃い赤
+          max color change threshold: 0
+          max value: 1
+          med color: 255; 50; 50  # 最も濃い赤
+          med color change threshold: 0
+          min value: 0
+          show caption: true
+          size: 100
+          text size: 7
+          top: 120  # 位置を変更
+
+
+
         - Class: rviz_plugins/Trajectory
           Color Border Vel Max: 3
           Enabled: true
@@ -2000,32 +2236,32 @@ Visualization Manager:
       Enabled: true
       Name: Control
     - Class: rviz_default_plugins/MarkerArray
-      Enabled: false
+      Enabled: true
       Name: MarkerArray
       Namespaces:
-        {}
+        "": true
       Topic:
         Depth: 5
         Durability Policy: Volatile
         History Policy: Keep Last
         Reliability Policy: Reliable
         Value: /aichallenge/objects_marker
-      Value: false
+      Value: true
     - Class: rviz_default_plugins/MarkerArray
-      Enabled: false
+      Enabled: true
       Name: MarkerArray
       Namespaces:
-        {}
+        "": true
       Topic:
         Depth: 1
         Durability Policy: Transient Local
         History Policy: Keep Last
         Reliability Policy: Reliable
         Value: /aichallenge/pitstop/area_marker
-      Value: false
+      Value: true
     - Alpha: 0.699999988079071
       Class: rviz_default_plugins/Map
-      Color Scheme: costmap
+      Color Scheme: map
       Draw Behind: false
       Enabled: true
       Name: Map
@@ -2035,91 +2271,14 @@ Visualization Manager:
         Filter size: 10
         History Policy: Keep Last
         Reliability Policy: Reliable
-        Value: /costmap_2d
+        Value: /ogm/map
       Update Topic:
         Depth: 5
         Durability Policy: Volatile
         History Policy: Keep Last
         Reliability Policy: Reliable
-        Value: /costmap_2d_updates
+        Value: /ogm/map_updates
       Use Timestamp: false
-      Value: true
-    - Alpha: 1
-      Buffer Length: 1
-      Class: rviz_default_plugins/Path
-      Color: 25; 255; 0
-      Enabled: false
-      Head Diameter: 0.30000001192092896
-      Head Length: 0.20000000298023224
-      Length: 0.30000001192092896
-      Line Style: Lines
-      Line Width: 0.029999999329447746
-      Name: Path
-      Offset:
-        X: 0
-        Y: 0
-        Z: 0
-      Pose Color: 255; 85; 255
-      Pose Style: Arrows
-      Radius: 0.029999999329447746
-      Shaft Diameter: 0.10000000149011612
-      Shaft Length: 0.10000000149011612
-      Topic:
-        Depth: 5
-        Durability Policy: Volatile
-        Filter size: 10
-        History Policy: Keep Last
-        Reliability Policy: Reliable
-        Value: /visual_path
-      Value: false
-    - Alpha: 0.699999988079071
-      Class: rviz_default_plugins/Map
-      Color Scheme: costmap
-      Draw Behind: false
-      Enabled: true
-      Name: Map
-      Topic:
-        Depth: 5
-        Durability Policy: Volatile
-        Filter size: 10
-        History Policy: Keep Last
-        Reliability Policy: Reliable
-        Value: /costmap_2d_2
-      Update Topic:
-        Depth: 5
-        Durability Policy: Volatile
-        History Policy: Keep Last
-        Reliability Policy: Reliable
-        Value: /costmap_2d_2_updates
-      Use Timestamp: false
-      Value: true
-    - Alpha: 1
-      Buffer Length: 1
-      Class: rviz_default_plugins/Path
-      Color: 25; 255; 0
-      Enabled: true
-      Head Diameter: 0.30000001192092896
-      Head Length: 0.20000000298023224
-      Length: 0.30000001192092896
-      Line Style: Lines
-      Line Width: 0.029999999329447746
-      Name: Path
-      Offset:
-        X: 0
-        Y: 0
-        Z: 0
-      Pose Color: 255; 85; 255
-      Pose Style: Arrows
-      Radius: 0.029999999329447746
-      Shaft Diameter: 0.10000000149011612
-      Shaft Length: 0.10000000149011612
-      Topic:
-        Depth: 5
-        Durability Policy: Volatile
-        Filter size: 10
-        History Policy: Keep Last
-        Reliability Policy: Reliable
-        Value: /obstacle_avoidance
       Value: true
   Enabled: true
   Global Options:
@@ -2221,11 +2380,11 @@ Visualization Manager:
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Scale: 18.376909255981445
+      Scale: 10
       Target Frame: viewer
       Value: TopDownOrtho (rviz_default_plugins)
-      X: -9.081948280334473
-      Y: -12.746370315551758
+      X: 0
+      Y: 0
     Saved:
       - Class: rviz_default_plugins/ThirdPersonFollower
         Distance: 18
@@ -2276,7 +2435,7 @@ Window Geometry:
   Hide Right Dock: false
   InitialPoseButtonPanel:
     collapsed: false
-  QMainWindow State: 000000ff00000000fd000000040000000000000297000003e4fc0200000010fb0000001200530065006c0065006300740069006f006e00000001e10000009b0000005c00fffffffb000000120056006900650077007300200054006f006f02000001df000002110000018500000122fb000000200054006f006f006c002000500072006f0070006500720074006900650073003203000002880000011d000002210000017afb000000100044006900730070006c0061007900730100000014000000e0000000c700fffffffc000000fa000000c7000000bb0100001afa000000010100000002fb0000000a0056006900650077007301000000000000033c0000010000fffffffb0000001e0054006f006f006c002000500072006f00700065007200740069006500730100000000ffffffff0000008c00fffffffb00000024004100750074006f00770061007200650053007400610074006500500061006e0065006c01000001c70000017b0000015e00fffffffb0000002000730065006c0065006300740069006f006e00200062007500660066006500720200000138000000aa0000023a00000294fb00000014005700690064006500530074006500720065006f02000000e6000000d2000003ee0000030bfb0000000c004b0069006e0065006300740200000186000001060000030c00000261fb0000000c00430061006d0065007200610100000682000000eb0000000000000000fb0000000a0049006d0061006700650100000505000002680000000000000000fb0000002c0049006e0069007400690061006c0050006f007300650042007500740074006f006e00500061006e0065006c000000068f000000de0000007100fffffffb0000002c0049006e0069007400690061006c0050006f007300650042007500740074006f006e00500061006e0065006c000000068f000000de0000000000000000fb00000030005200650063006f0067006e006900740069006f006e0052006500730075006c0074004f006e0049006d006100670065000000038a0000010b0000002800fffffffb0000002a004100750074006f0077006100720065004400610074006500540069006d006500500061006e0065006c0100000348000000460000003f00fffffffb00000034004100750074006f007700610072006500530063007200650065006e004300610070007400750072006500500061006e0065006c0100000394000000640000005d00ffffff000000010000015f000006fffc0200000002fb0000001e0054006f006f006c002000500072006f00700065007200740069006500730100000041000000780000000000000000fb0000001200530065006c0065006300740069006f006e010000025a000000b200000000000000000000000200000e7a0000005afc0100000001fb0000000a00560069006500770073030000004e00000080000002e1000001970000000300000e7a0000005afc0100000002fb0000000800540069006d0065010000000000000e7a0000000000000000fb0000000800540069006d0065010000000000000450000000000000000000000435000003e400000004000000040000000800000008fc0000000100000000000000010000000a0054006f006f006c00730300000000ffffffff0000000000000000
+  QMainWindow State: 000000ff00000000fd000000040000000000000297000003e4fc0200000010fb0000001200530065006c0065006300740069006f006e00000001e10000009b0000005c00fffffffb000000120056006900650077007300200054006f006f02000001df000002110000018500000122fb000000200054006f006f006c002000500072006f0070006500720074006900650073003203000002880000011d000002210000017afb000000100044006900730070006c0061007900730100000014000000e0000000c700fffffffc000000fa000000c7000000bb0100001afa000000000100000002fb0000000a0056006900650077007301000000000000033c0000010000fffffffb0000001e0054006f006f006c002000500072006f00700065007200740069006500730100000000ffffffff0000008c00fffffffb00000024004100750074006f00770061007200650053007400610074006500500061006e0065006c01000001c70000017b0000015e00fffffffb0000002000730065006c0065006300740069006f006e00200062007500660066006500720200000138000000aa0000023a00000294fb00000014005700690064006500530074006500720065006f02000000e6000000d2000003ee0000030bfb0000000c004b0069006e0065006300740200000186000001060000030c00000261fb0000000c00430061006d0065007200610100000682000000eb0000000000000000fb0000000a0049006d0061006700650100000505000002680000000000000000fb0000002c0049006e0069007400690061006c0050006f007300650042007500740074006f006e00500061006e0065006c000000068f000000de0000007100fffffffb0000002c0049006e0069007400690061006c0050006f007300650042007500740074006f006e00500061006e0065006c000000068f000000de0000000000000000fb00000030005200650063006f0067006e006900740069006f006e0052006500730075006c0074004f006e0049006d006100670065000000038a0000010b0000002800fffffffb0000002a004100750074006f0077006100720065004400610074006500540069006d006500500061006e0065006c0100000348000000460000003f00fffffffb00000034004100750074006f007700610072006500530063007200650065006e004300610070007400750072006500500061006e0065006c0100000394000000640000005d00ffffff000000010000015f000006fffc0200000002fb0000001e0054006f006f006c002000500072006f00700065007200740069006500730100000041000000780000000000000000fb0000001200530065006c0065006300740069006f006e010000025a000000b200000000000000000000000200000e7a0000005afc0100000001fb0000000a00560069006500770073030000004e00000080000002e1000001970000000300000e7a0000005afc0100000002fb0000000800540069006d0065010000000000000e7a0000000000000000fb0000000800540069006d0065010000000000000450000000000000000000000435000003e400000004000000040000000800000008fc0000000100000000000000010000000a0054006f006f006c00730300000000ffffffff0000000000000000
   RecognitionResultOnImage:
     collapsed: false
   Selection:
