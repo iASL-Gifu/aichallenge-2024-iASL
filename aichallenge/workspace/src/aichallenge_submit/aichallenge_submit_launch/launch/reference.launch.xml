@@ -360,6 +360,7 @@
         <node pkg="trajectory_follower_node" exec="controller_node_exe" name="controller" output="screen">
 
           <remap from="~/input/reference_trajectory" to="/planning/scenario_planning/selected_trajectory"/>
+          <!-- <remap from="~/input/reference_trajectory" to="/planning/scenario_planning/trajectory"/> -->
           <!-- <remap from="~/input/reference_trajectory" to="/planning/scenario_planning/avoidance/trajectory"/> -->
           
           <remap from="~/input/current_odometry" to="/localization/kinematic_state"/>
