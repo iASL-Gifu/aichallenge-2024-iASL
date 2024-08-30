@@ -232,13 +232,25 @@
 
     </group>
 
+    <!-- route_publisher -->
+
+    <!-- <node pkg="route_publisher" exec="route_publisher_node" name="route_publisher_node" output="screen">
+        <remap from="~/input/section_change" to="/planning/section_event"/>
+        <remap from="~/output/route" to="/planning/scenario_planning/route"/>
+        
+        <param from="$(find-pkg-share route_publisher)/config/route_pose.yaml" />
+        
+    </node> -->
+
+    <!-- route_publisher End -->
+
     <!-- section_event_handler -->
 
-    <node pkg="section_event_handler" exec="section_event_node" name="section_event_node" output="screen">
+    <!-- <node pkg="section_event_handler" exec="section_event_node" name="section_event_node" output="screen">
 
         <remap from="~/input/status" to="/aichallenge/awsim/status"/>
         <remap from="~/output/section_change" to="/planning/section_event"/>
-    </node>
+    </node> -->
 
     <!-- section_event_handler End -->
 
@@ -274,7 +286,7 @@
 
     <!-- costmap  -->
 
-    <!-- <arg name="vehicle_param_file" default="$(find-pkg-share racing_kart_description)/config/vehicle_info.param.yaml"/>
+    <arg name="vehicle_param_file" default="$(find-pkg-share racing_kart_description)/config/vehicle_info.param.yaml"/>
     <include file="$(find-pkg-share costmap_generator)/launch/costmap_generator.launch.xml">
         <arg name="input_objects" value="/perception/object_recognition/objects_filtered"/>
         <arg name="input_points_no_ground" value="/perception/obstacle_segmentation/pointcloud"/>
@@ -284,7 +296,7 @@
         <arg name="output_grid_map" value="costmap_generator/grid_map"/>
         <arg name="output_occupancy_grid" value="costmap_generator/occupancy_grid"/>
         <arg name="vehicle_param_file" value="$(var vehicle_param_file)"/>
-    </include> -->
+    </include>
 
       <!-- costmap End -->
 
