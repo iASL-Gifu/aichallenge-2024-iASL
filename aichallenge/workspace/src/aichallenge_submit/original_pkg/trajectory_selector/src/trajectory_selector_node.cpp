@@ -68,12 +68,12 @@ private:
       selected_trajectory = trajectory2_;
     } else if (!trajectory1_ && trajectory2_) {
       selected_trajectory = trajectory2_;
-      RCLCPP_WARN(this->get_logger(), "Only trajectory_lane is available, publishing it.");
+      // RCLCPP_WARN(this->get_logger(), "Only trajectory_lane is available, publishing it.");
     } else if (trajectory1_ && !trajectory2_) {
       selected_trajectory = trajectory1_;
-      RCLCPP_WARN(this->get_logger(), "Only trajectory_pit is available, publishing it.");
+      // RCLCPP_WARN(this->get_logger(), "Only trajectory_pit is available, publishing it.");
     } else {
-      RCLCPP_WARN(this->get_logger(), "No valid trajectory available for the current scenario.");
+      // RCLCPP_WARN(this->get_logger(), "No valid trajectory available for the current scenario.");
       return;
     }
 
