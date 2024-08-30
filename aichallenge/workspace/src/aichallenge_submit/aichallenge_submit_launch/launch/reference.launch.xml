@@ -297,12 +297,13 @@
 
       <!-- trajectory_selector -->
 
-      <!-- <node pkg="trajectory_selector" exec="trajectory_selector_node" name="trajectory_selector_node" output="screen">
+      <node pkg="trajectory_selector" exec="trajectory_selector_node" name="trajectory_selector_node" output="screen">
         <remap from="/scenario" to="/planning/pit_stop/scenario"/>
+        <remap from="/status" to="/aichallenge/awsim/status"/>
         <remap from="/trajectory_pit" to="/planning/scenario_planning/trajectory"/>
         <remap from="/trajectory_lane" to="/planning/scenario_planning/avoidance/trajectory"/>
         <remap from="/selected_trajectory" to="/planning/scenario_planning/selected_trajectory"/>
-      </node> -->
+      </node>
 
       <!-- trajectory_selector End -->
 
@@ -358,8 +359,8 @@
         
         <node pkg="trajectory_follower_node" exec="controller_node_exe" name="controller" output="screen">
 
-          <!-- <remap from="~/input/reference_trajectory" to="/planning/scenario_planning/selected_trajectory"/> -->
-          <remap from="~/input/reference_trajectory" to="/planning/scenario_planning/avoidance/trajectory"/>
+          <remap from="~/input/reference_trajectory" to="/planning/scenario_planning/selected_trajectory"/>
+          <!-- <remap from="~/input/reference_trajectory" to="/planning/scenario_planning/avoidance/trajectory"/> -->
           
           <remap from="~/input/current_odometry" to="/localization/kinematic_state"/>
           <remap from="~/input/current_steering" to="/vehicle/status/steering_status"/>
