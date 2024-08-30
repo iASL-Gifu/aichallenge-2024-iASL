@@ -223,6 +223,13 @@
         <remap from="output" to="/planning/scenario_planning/trajectory"/>
       </node>
 
+      <node pkg="path_to_trajectory" exec="path_to_trajectory_node" name="path_to_trajectory_node_avoidance" output="screen">
+        <remap from="input" to="/planning/avoidance/obstacle_avoidance_path"/>
+        <remap from="output" to="/planning/scenario_planning/avoidance/trajectory"/>
+      </node>
+
+      
+
     </group>
 
     <!-- scenario_pub_pkg -->
@@ -238,6 +245,22 @@
     </node>
 
     <!-- scenario_pub_pkg End -->
+
+    <!-- Pit_Stop -->
+
+    <node pkg="pit_stop_package" exec="pit_stop_node" name="pit_stop_node" output="screen">
+
+        <param name="target_x" value="89626.3671875" />  
+        <param name="target_y" value="43134.921875" />  
+        <param name="threshold_distance" value="0.8" />
+
+        <remap from="/scenario" to="/planning/pit_stop/scenario"/>
+        <remap from="~/input/pit_status" to="/aichallenge/pitstop/status"/>
+        <remap from="~/input/kinematics" to="/localization/kinematic_state"/>
+        <remap from="/gear_command" to="/control/command/gear_cmd"/>
+    </node>
+
+    <!-- Pit_Stop End -->
 
     <!-- costmap  -->
 
@@ -274,12 +297,12 @@
 
       <!-- trajectory_selector -->
 
-      <node pkg="trajectory_selector" exec="trajectory_selector_node" name="trajectory_selector_node" output="screen">
+      <!-- <node pkg="trajectory_selector" exec="trajectory_selector_node" name="trajectory_selector_node" output="screen">
         <remap from="/scenario" to="/planning/pit_stop/scenario"/>
-        <remap from="/trajectory_pit" to="/planning/scenario_planning/parking/trajectory"/>
+        <remap from="/trajectory_avoidance" to="/planning/scenario_planning/avoidance/trajectory"/>
         <remap from="/trajectory_lane" to="/planning/scenario_planning/trajectory"/>
         <remap from="/selected_trajectory" to="/planning/scenario_planning/selected_trajectory"/>
-      </node>
+      </node> -->
 
       <!-- trajectory_selector End -->
 
@@ -333,7 +356,9 @@
         
         <node pkg="trajectory_follower_node" exec="controller_node_exe" name="controller" output="screen">
 
-          <remap from="~/input/reference_trajectory" to="/planning/scenario_planning/selected_trajectory"/>
+          <!-- <remap from="~/input/reference_trajectory" to="/planning/scenario_planning/selected_trajectory"/> -->
+          <remap from="~/input/reference_trajectory" to="/planning/scenario_planning/avoidance/trajectory"/>
+          
           <remap from="~/input/current_odometry" to="/localization/kinematic_state"/>
           <remap from="~/input/current_steering" to="/vehicle/status/steering_status"/>
           <remap from="~/input/current_accel" to="/localization/acceleration"/>

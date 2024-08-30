@@ -47,6 +47,9 @@
 
   <!-- path converter -->
   <node pkg="path_conversion" exec="path_to_laneid_converter" name="path_to_laneid_converter" output="screen">
+    <remap from="obstacle_avoidance" to="obstacle_avoidance"/>
+    <remap from="obstacle_path_with_laneid" to="/planning/avoidance/obstacle_avoidance_path"/>
+    
   </node>
 
 </launch>
