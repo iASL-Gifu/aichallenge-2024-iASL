@@ -88,7 +88,7 @@ private:
         object.kinematics.initial_pose_with_covariance.pose.position.z = last_data_msg_->data[i + 2];
 
         // Add additional details like shape or classification as needed
-        object.shape.type = autoware_auto_perception_msgs::msg::Shape::BOUNDING_BOX;
+        object.shape.type = autoware_auto_perception_msgs::msg::Shape::CYLINDER;
         object.shape.dimensions.x = last_data_msg_->data[i + 3] * 2; // Example: diameter -> dimensions
         object.shape.dimensions.y = last_data_msg_->data[i + 3] * 2;
         object.shape.dimensions.z = last_data_msg_->data[i + 3] * 2;
