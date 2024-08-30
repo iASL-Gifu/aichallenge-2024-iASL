@@ -17,7 +17,7 @@
     <remap from="~/output/occupancy_grid" to="$(var output_occupancy_grid)"/>
 
     <param name="costmap_frame" value="map"/>
-    <param name="vehicle_frame" value="base_link"/>
+    <param name="vehicle_frame" value="static_base"/>
     <param name="map_frame" value="map"/>
 
     <param name="update_rate" value="10.0"/>
@@ -37,7 +37,7 @@
     <param name="grid_position_y" value="0.0"/>
     <param name="maximum_lidar_height_thres" value="0.3"/>
     <param name="minimum_lidar_height_thres" value="-2.2"/>
-    <param name="expand_polygon_size" value="1.0"/>
+    <param name="expand_polygon_size" value="0.0"/>
     <param name="size_of_expansion_kernel" value="9"/>
   </node>
 </launch>

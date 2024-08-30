@@ -232,25 +232,28 @@
 
     </group>
 
+    <!-- <node pkg="tf2_ros" exec="static_transform_publisher" output="screen"
+        args="89633.15625 43127.80078125 42.195587158203125 0.004984998786902679 -0.010415014249405455 0.8738473964122314 0.4860631698131876 map static_base"/> -->
+
     <!-- route_publisher -->
 
-    <!-- <node pkg="route_publisher" exec="route_publisher_node" name="route_publisher_node" output="screen">
+    <node pkg="route_publisher" exec="route_publisher_node" name="route_publisher_node" output="screen">
         <remap from="~/input/section_change" to="/planning/section_event"/>
         <remap from="~/output/route" to="/planning/scenario_planning/route"/>
         
         <param from="$(find-pkg-share route_publisher)/config/route_pose.yaml" />
         
-    </node> -->
+    </node>
 
     <!-- route_publisher End -->
 
     <!-- section_event_handler -->
 
-    <!-- <node pkg="section_event_handler" exec="section_event_node" name="section_event_node" output="screen">
+    <node pkg="section_event_handler" exec="section_event_node" name="section_event_node" output="screen">
 
         <remap from="~/input/status" to="/aichallenge/awsim/status"/>
         <remap from="~/output/section_change" to="/planning/section_event"/>
-    </node> -->
+    </node>
 
     <!-- section_event_handler End -->
 
@@ -286,7 +289,7 @@
 
     <!-- costmap  -->
 
-    <arg name="vehicle_param_file" default="$(find-pkg-share racing_kart_description)/config/vehicle_info.param.yaml"/>
+    <!-- <arg name="vehicle_param_file" default="$(find-pkg-share racing_kart_description)/config/vehicle_info.param.yaml"/>
     <include file="$(find-pkg-share costmap_generator)/launch/costmap_generator.launch.xml">
         <arg name="input_objects" value="/perception/object_recognition/objects_filtered"/>
         <arg name="input_points_no_ground" value="/perception/obstacle_segmentation/pointcloud"/>
@@ -296,7 +299,7 @@
         <arg name="output_grid_map" value="costmap_generator/grid_map"/>
         <arg name="output_occupancy_grid" value="costmap_generator/occupancy_grid"/>
         <arg name="vehicle_param_file" value="$(var vehicle_param_file)"/>
-    </include>
+    </include> -->
 
       <!-- costmap End -->
 
@@ -306,7 +309,6 @@
 
       <include file="$(find-pkg-share freespace_planner)/launch/freespace_planner.launch.xml">
         <arg name="input_route" value="/planning/scenario_planning/route"/> 
-        <arg name="input_route" value="/planning/mission_planning/route"/>
         <arg name="input_occupancy_grid" value="costmap_generator/occupancy_grid"/>
         <arg name="input_scenario" value="/planning/pit_stop/scenario"/>
         <arg name="input_odometry" value="/localization/kinematic_state"/>

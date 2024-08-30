@@ -49,11 +49,12 @@ private:
 
         if (msg->data == 45)
         {
+            route_msg.header.frame_id = "map";
             route_msg.start_pose.position.x = pit_pose_x_;
             route_msg.start_pose.position.y = pit_pose_y_;
             route_msg.start_pose.orientation.z = pit_orientation_z_;
             route_msg.start_pose.orientation.w = pit_orientation_w_;
-
+            
             route_msg.goal_pose.position.x = harf_pose_x_;
             route_msg.goal_pose.position.y = harf_pose_y_;
             route_msg.goal_pose.orientation.z = harf_orientation_z_;
@@ -61,6 +62,8 @@ private:
         }
         else if (msg->data == 81)
         {
+            route_msg.header.frame_id = "map";
+
             route_msg.start_pose.position.x = harf_pose_x_;
             route_msg.start_pose.position.y = harf_pose_y_;
             route_msg.start_pose.orientation.z = harf_orientation_z_;
