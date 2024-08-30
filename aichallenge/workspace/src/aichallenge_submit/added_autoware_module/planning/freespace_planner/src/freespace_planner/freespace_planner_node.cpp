@@ -315,6 +315,9 @@ void FreespacePlannerNode::onRoute(const LaneletRoute::ConstSharedPtr msg)
 {
   route_ = msg;
 
+  start_pose_.header = msg->header;
+  start_pose_.pose = msg->start_pose;
+
   goal_pose_.header = msg->header;
   goal_pose_.pose = msg->goal_pose;
 
@@ -431,6 +434,7 @@ void FreespacePlannerNode::onTimer()
   constexpr const char * vehicle_frame = "base_link";
   current_pose_ = tier4_autoware_utils::transform2pose(
     getTransform(occupancy_grid_->header.frame_id, vehicle_frame));
+
   if (current_pose_.header.frame_id == "") {
     return;
   }
@@ -475,16 +479,20 @@ void FreespacePlannerNode::planTrajectory()
   algo_->setMap(*occupancy_grid_);
 
   // Calculate poses in costmap frame
-  const auto current_pose_in_costmap_frame = transformPose(
-    current_pose_.pose,
-    getTransform(occupancy_grid_->header.frame_id, current_pose_.header.frame_id));
+  // const auto current_pose_in_costmap_frame = transformPose(
+  //   current_pose_.pose,
+  //   getTransform(occupancy_grid_->header.frame_id, current_pose_.header.frame_id));
+
+  const auto start_pose_in_costmap_frame = transformPose(
+    start_pose_.pose, getTransform(occupancy_grid_->header.frame_id, start_pose_.header.frame_id));
+
 
   const auto goal_pose_in_costmap_frame = transformPose(
     goal_pose_.pose, getTransform(occupancy_grid_->header.frame_id, goal_pose_.header.frame_id));
 
   // execute planning
   const rclcpp::Time start = get_clock()->now();
-  const bool result = algo_->makePlan(current_pose_in_costmap_frame, goal_pose_in_costmap_frame);
+  const bool result = algo_->makePlan(start_pose_in_costmap_frame, goal_pose_in_costmap_frame);
   const rclcpp::Time end = get_clock()->now();
 
   RCLCPP_INFO(get_logger(), "Freespace planning: %f [s]", (end - start).seconds());
