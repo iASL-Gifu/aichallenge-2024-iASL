@@ -1,6 +1,5 @@
-
-<?xml version='1.0' encoding='utf-8'?>
-<osm version="0.6" generator="custom_conversion">
+<?xml version="1.0" encoding="UTF-8"?>
+<osm generator="VMB">
   <node id="1" lat="35.62579839585403" lon="139.78150047282395">
     <tag k="local_x" v="89660.3701" />
     <tag k="local_y" v="43128.8083" />
