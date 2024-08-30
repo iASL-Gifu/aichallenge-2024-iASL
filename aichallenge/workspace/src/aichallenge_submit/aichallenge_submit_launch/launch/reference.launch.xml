@@ -232,6 +232,16 @@
 
     </group>
 
+    <!-- section_event_handler -->
+
+    <!-- <node pkg="section_event_handler" exec="section_event_node" name="section_event_node" output="screen">
+
+        <remap from="~/input/status" to="/aichallenge/awsim/status"/>
+        <remap from="~/output/section_change" to="/planning/section_event"/>
+    </node> -->
+
+    <!-- section_event_handler End -->
+
     <!-- scenario_pub_pkg -->
 
     <node pkg="scenario_pub_pkg" exec="scenario_pub_node" name="scenario_pub_node" output="screen">
