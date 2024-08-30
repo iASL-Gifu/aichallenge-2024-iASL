@@ -45,4 +45,8 @@
     <param from="$(find-pkg-share path_publisher)/config/path.param.yaml" />
   </node>
 
+  <!-- path converter -->
+  <node pkg="path_conversion" exec="path_to_laneid_converter" name="path_to_laneid_converter" output="screen">
+  </node>
+
 </launch>
