@@ -234,11 +234,11 @@
 
     <!-- section_event_handler -->
 
-    <!-- <node pkg="section_event_handler" exec="section_event_node" name="section_event_node" output="screen">
+    <node pkg="section_event_handler" exec="section_event_node" name="section_event_node" output="screen">
 
         <remap from="~/input/status" to="/aichallenge/awsim/status"/>
         <remap from="~/output/section_change" to="/planning/section_event"/>
-    </node> -->
+    </node>
 
     <!-- section_event_handler End -->
 
@@ -280,6 +280,7 @@
         <arg name="input_points_no_ground" value="/perception/obstacle_segmentation/pointcloud"/>
         <arg name="input_lanelet_map" value="/map/vector_map"/>
         <arg name="input_scenario" value="/planning/scenario_planning/scenario"/>
+        <arg name="input_section_change" value="/planning/section_event"/>
         <arg name="output_grid_map" value="costmap_generator/grid_map"/>
         <arg name="output_occupancy_grid" value="costmap_generator/occupancy_grid"/>
         <arg name="vehicle_param_file" value="$(var vehicle_param_file)"/>
