@@ -239,8 +239,11 @@
 
     </group>
 
+    <!-- static TF for costmap -->
     <node pkg="tf2_ros" exec="static_transform_publisher" output="screen"
         args="89633.15625 43127.80078125 42.195587158203125 0.004984998786902679 -0.010415014249405455 0.8738473964122314 0.4860631698131876 map static_base"/>
+
+    <!-- static TF for costmap End -->
 
     <!-- route_publisher -->
 
@@ -326,6 +329,15 @@
       </include> -->
 
       <!-- freespace_planner  End -->
+
+      <!-- trajectory_manager -->
+      <!-- <node pkg="trajectory_manager" exec="trajectory_manage_node" name="trajectory_manage_node" output="screen">
+        <remap from="~/input/trajectory" to="/planning/scenario_planning/astar/trajectory"/>
+        <remap from="~/input/object_event" to="/perception/object_event"/>
+        <remap from="~/output/trajectory" to="/planning/scenario_planning/astar/managed_trajectory"/>
+      </node> -->
+
+      <!-- trajectory_manager End -->
 
       <!-- trajectory_selector -->
 
