@@ -319,7 +319,7 @@
         <arg name="input_occupancy_grid" value="costmap_generator/occupancy_grid"/>
         <arg name="input_scenario" value="/planning/pit_stop/scenario"/>
         <arg name="input_odometry" value="/localization/kinematic_state"/>
-        <arg name="output_trajectory" value="/planning/scenario_planning/parking/trajectory"/>
+        <arg name="output_trajectory" value="/planning/scenario_planning/astar/trajectory"/>
         <arg name="is_completed" value="/planning/scenario_planning/parking/is_completed"/>
         <arg name="param_file" value="$(find-pkg-share aichallenge_submit_launch)/param/planning/freespace_planner/freespace_planner.param.yaml"/>
         <arg name="vehicle_param_file" value="$(var vehicle_param_file)"/>
@@ -333,7 +333,7 @@
         <remap from="/scenario" to="/planning/pit_stop/scenario"/>
         <remap from="/status" to="/aichallenge/awsim/status"/>
         <remap from="/trajectory_pit" to="/planning/scenario_planning/trajectory"/>
-        <remap from="/trajectory_lane" to="/planning/scenario_planning/parking/trajectory"/>
+        <remap from="/trajectory_lane" to="/planning/scenario_planning/astar/trajectory"/>
         <remap from="/trajectory_avoidance" to="/planning/scenario_planning/avoidance/trajectory"/>
         <remap from="/selected_trajectory" to="/planning/scenario_planning/selected_trajectory"/>
       </node>
@@ -406,6 +406,7 @@
           <remap from="~/output/longitudinal_diagnostic" to="longitudinal/diagnostic"/>
           <remap from="~/output/stop_reason" to="longitudinal/stop_reason"/>
           <remap from="~/output/control_cmd" to="/control/command/control_cmd"/>
+          <!-- <remap from="~/output/control_cmd" to="/control/command/control_cmd_normal"/> -->
           <param name="lateral_controller_mode" value="$(var lateral_controller_mode)"/>
           <param name="longitudinal_controller_mode" value="$(var longitudinal_controller_mode)"/>
           <param from="$(var nearest_search_param_path)"/>
@@ -415,6 +416,23 @@
           <param from="$(var vehicle_param_file)"/>
         </node>
       </group>
+
+      
+      <!-- <node pkg="reverse_controller" exec="reverse_controller_node" name="reverse_controller_node" output="screen">
+        <remap from="input/control_cmd" to="/control/command/control_cmd_normal"/>
+        <remap from="output/control_cmd" to="/control/command/control_cmd"/>
+        <remap from="~/input/mode_change_event" to="/vehicle/mode_change_event"/>
+        <remap from="~/input/control_mode" to="/vehicle/status/control_mode"/>
+        
+    
+      </node>
+
+      <node pkg="contorl_mode_handler" exec="control_event_node" name="control_event_node" output="screen">
+        <remap from="~/input/control_mode" to="/vehicle/status/control_mode"/>
+        <remap from="~/output/mode_change_event" to="/vehicle/mode_change_event"/>
+    
+      </node> -->
+
   </group>  
   
   <!--MPC PID Controller   End -->
