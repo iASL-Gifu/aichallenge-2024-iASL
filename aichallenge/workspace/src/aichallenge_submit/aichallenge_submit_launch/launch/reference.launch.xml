@@ -239,8 +239,8 @@
 
     </group>
 
-    <!-- <node pkg="tf2_ros" exec="static_transform_publisher" output="screen"
-        args="89633.15625 43127.80078125 42.195587158203125 0.004984998786902679 -0.010415014249405455 0.8738473964122314 0.4860631698131876 map static_base"/> -->
+    <node pkg="tf2_ros" exec="static_transform_publisher" output="screen"
+        args="89633.15625 43127.80078125 42.195587158203125 0.004984998786902679 -0.010415014249405455 0.8738473964122314 0.4860631698131876 map static_base"/>
 
     <!-- route_publisher -->
 
@@ -302,7 +302,7 @@
         <arg name="input_points_no_ground" value="/perception/obstacle_segmentation/pointcloud"/>
         <arg name="input_lanelet_map" value="/map/vector_map"/>
         <arg name="input_scenario" value="/planning/scenario_planning/scenario"/>
-        <arg name="input_section_change" value="/planning/section_event"/>
+        <arg name="input_object_change" value="/perception/object_event"/>
         <arg name="output_grid_map" value="costmap_generator/grid_map"/>
         <arg name="output_occupancy_grid" value="costmap_generator/occupancy_grid"/>
         <arg name="vehicle_param_file" value="$(var vehicle_param_file)"/>
