@@ -421,10 +421,18 @@
       <!-- <node pkg="reverse_controller" exec="reverse_controller_node" name="reverse_controller_node" output="screen">
         <remap from="input/control_cmd" to="/control/command/control_cmd_normal"/>
         <remap from="output/control_cmd" to="/control/command/control_cmd"/>
-
-        <param name="speed_threshold" value="0.01" />
+        <remap from="~/input/mode_change_event" to="/vehicle/mode_change_event"/>
+        <remap from="~/input/control_mode" to="/vehicle/status/control_mode"/>
         
+    
+      </node>
+
+      <node pkg="contorl_mode_handler" exec="control_event_node" name="control_event_node" output="screen">
+        <remap from="~/input/control_mode" to="/vehicle/status/control_mode"/>
+        <remap from="~/output/mode_change_event" to="/vehicle/mode_change_event"/>
+    
       </node> -->
+
   </group>  
   
   <!--MPC PID Controller   End -->
