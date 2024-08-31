@@ -19,6 +19,10 @@ $AWSIM_DIRECTORY/AWSIM.x86_64 >/dev/null &
 PID_AWSIM=$!
 sleep 10
 
+# ros2 run key_node keyboard_simulator>autoware.log 2>&1 &
+# PID_ROS=$!
+# sleep 10
+
 # Start Autoware(sleep時間は任意の時間に変更)
 echo "Start Autoware"
 ros2 launch aichallenge_system_launch aichallenge_system.launch.xml >autoware.log 2>&1 &
