@@ -333,7 +333,8 @@
         <remap from="/scenario" to="/planning/pit_stop/scenario"/>
         <remap from="/status" to="/aichallenge/awsim/status"/>
         <remap from="/trajectory_pit" to="/planning/scenario_planning/trajectory"/>
-        <remap from="/trajectory_lane" to="/planning/scenario_planning/astar/trajectory"/>
+        <remap from="/trajectory_lane" to="/planning/scenario_planning/avoidance/trajectory"/>
+        <!-- <remap from="/trajectory_lane" to="/planning/scenario_planning/astar/trajectory"/> -->
         <remap from="/trajectory_avoidance" to="/planning/scenario_planning/avoidance/trajectory"/>
         <remap from="/selected_trajectory" to="/planning/scenario_planning/selected_trajectory"/>
       </node>
