@@ -11,24 +11,24 @@ public:
         // パラメータの宣言（デフォルト値を設定）
         this->declare_parameter("harf_pose.position.x", 0.0);
         this->declare_parameter("harf_pose.position.y", 0.0);
-        this->declare_parameter("pit_stop_pose.position.x", 0.0);
-        this->declare_parameter("pit_stop_pose.position.y", 0.0);
+        this->declare_parameter("goal_pose.position.x", 0.0);
+        this->declare_parameter("goal_pose.position.y", 0.0);
 
         this->declare_parameter("harf_pose.orientation.z", 0.0);
         this->declare_parameter("harf_pose.orientation.w", 0.0);
-        this->declare_parameter("pit_stop_pose.orientation.z", 0.0);
-        this->declare_parameter("pit_stop_pose.orientation.w", 0.0);
+        this->declare_parameter("goal_pose.orientation.z", 0.0);
+        this->declare_parameter("goal_pose.orientation.w", 0.0);
 
         // YAMLファイルからのパラメータの取得
         this->get_parameter("harf_pose.position.x", harf_pose_x_);
         this->get_parameter("harf_pose.position.y", harf_pose_y_);
-        this->get_parameter("pit_stop_pose.position.x", pit_pose_x_);
-        this->get_parameter("pit_stop_pose.position.y", pit_pose_y_);
+        this->get_parameter("goal_pose.position.x", goal_pose_x_);
+        this->get_parameter("goal_pose.position.y", goal_pose_y_);
 
         this->get_parameter("harf_pose.orientation.z", harf_orientation_z_);
         this->get_parameter("harf_pose.orientation.w", harf_orientation_w_);
-        this->get_parameter("pit_stop_pose.orientation.z", pit_orientation_z_);
-        this->get_parameter("pit_stop_pose.orientation.w", pit_orientation_w_);
+        this->get_parameter("goal_pose.orientation.z", goal_orientation_z_);
+        this->get_parameter("goal_pose.orientation.w", goal_orientation_w_);
 
         // サブスクリプションの作成
         section_change_sub_ = this->create_subscription<std_msgs::msg::Int32>(
@@ -50,10 +50,10 @@ private:
         if (msg->data == 45)
         {
             route_msg.header.frame_id = "map";
-            route_msg.start_pose.position.x = pit_pose_x_;
-            route_msg.start_pose.position.y = pit_pose_y_;
-            route_msg.start_pose.orientation.z = pit_orientation_z_;
-            route_msg.start_pose.orientation.w = pit_orientation_w_;
+            route_msg.start_pose.position.x = goal_pose_x_;
+            route_msg.start_pose.position.y = goal_pose_y_;
+            route_msg.start_pose.orientation.z = goal_orientation_z_;
+            route_msg.start_pose.orientation.w = goal_orientation_w_;
             
             route_msg.goal_pose.position.x = harf_pose_x_;
             route_msg.goal_pose.position.y = harf_pose_y_;
@@ -69,18 +69,18 @@ private:
             route_msg.start_pose.orientation.z = harf_orientation_z_;
             route_msg.start_pose.orientation.w = harf_orientation_w_;
 
-            route_msg.goal_pose.position.x = pit_pose_x_;
-            route_msg.goal_pose.position.y = pit_pose_y_;
-            route_msg.goal_pose.orientation.z = pit_orientation_z_;
-            route_msg.goal_pose.orientation.w = pit_orientation_w_;
+            route_msg.goal_pose.position.x = goal_pose_x_;
+            route_msg.goal_pose.position.y = goal_pose_y_;
+            route_msg.goal_pose.orientation.z = goal_orientation_z_;
+            route_msg.goal_pose.orientation.w = goal_orientation_w_;
         }
 
         route_pub_->publish(route_msg);
     }
 
     // メンバ変数
-    double harf_pose_x_, harf_pose_y_, pit_pose_x_, pit_pose_y_;
-    double harf_orientation_z_, harf_orientation_w_, pit_orientation_z_, pit_orientation_w_;
+    double harf_pose_x_, harf_pose_y_, goal_pose_x_, goal_pose_y_;
+    double harf_orientation_z_, harf_orientation_w_, goal_orientation_z_, goal_orientation_w_;
     rclcpp::Subscription<std_msgs::msg::Int32>::SharedPtr section_change_sub_;
     rclcpp::Publisher<autoware_planning_msgs::msg::LaneletRoute>::SharedPtr route_pub_;
 };

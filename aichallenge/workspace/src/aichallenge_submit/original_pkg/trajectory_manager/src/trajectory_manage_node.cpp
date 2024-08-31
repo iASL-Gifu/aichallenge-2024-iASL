@@ -24,15 +24,25 @@ public:
 private:
   void trajectoryCallback(const autoware_auto_planning_msgs::msg::Trajectory::SharedPtr msg)
   {
-    last_trajectory_ = *msg;
+    last_trajectory_ = std::make_shared<autoware_auto_planning_msgs::msg::Trajectory>(*msg);
     RCLCPP_INFO(this->get_logger(), "Trajectory received and stored.");
   }
 
-  void eventCallback(const std_msgs::msg::Int32::SharedPtr /*msg*/)
+  void eventCallback(const std_msgs::msg::Int32::SharedPtr msg)
   {
-    if (trajectory_publisher_->get_subscription_count() > 0) {
-      trajectory_publisher_->publish(last_trajectory_);
+    // Check if the event is 3 or 7 and if a trajectory is stored
+    if ((msg->data == 3 || msg->data == 7) && last_trajectory_)
+    {
+      trajectory_publisher_->publish(*last_trajectory_);
       RCLCPP_INFO(this->get_logger(), "Stored Trajectory published.");
+
+      // Reset the stored trajectory after publishing
+      last_trajectory_.reset();
+      RCLCPP_INFO(this->get_logger(), "Trajectory reset after publishing.");
+    }
+    else if (!last_trajectory_)
+    {
+      RCLCPP_WARN(this->get_logger(), "No Trajectory available to publish.");
     }
   }
 
@@ -40,7 +50,7 @@ private:
   rclcpp::Subscription<std_msgs::msg::Int32>::SharedPtr event_subscriber_;
   rclcpp::Publisher<autoware_auto_planning_msgs::msg::Trajectory>::SharedPtr trajectory_publisher_;
 
-  autoware_auto_planning_msgs::msg::Trajectory last_trajectory_;
+  std::shared_ptr<autoware_auto_planning_msgs::msg::Trajectory> last_trajectory_;
 };
 
 int main(int argc, char * argv[])

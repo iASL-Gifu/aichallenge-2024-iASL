@@ -58,19 +58,19 @@ using geometry_msgs::msg::Twist;
 using nav_msgs::msg::Odometry;
 using tier4_planning_msgs::msg::Scenario;
 
-bool isActive(const Scenario::ConstSharedPtr & scenario)
-{
-  if (!scenario) {
-    return false;
-  }
+// bool isActive(const Scenario::ConstSharedPtr & scenario)
+// {
+//   if (!scenario) {
+//     return false;
+//   }
 
-  const auto & s = scenario->activating_scenarios;
-  if (std::find(std::begin(s), std::end(s), Scenario::PARKING) != std::end(s)) {
-    return true;
-  }
+//   const auto & s = scenario->activating_scenarios;
+//   if (std::find(std::begin(s), std::end(s), Scenario::PARKING) != std::end(s)) {
+//     return true;
+//   }
 
-  return false;
-}
+//   return false;
+// }
 
 PoseArray trajectory2PoseArray(const Trajectory & trajectory)
 {
@@ -382,7 +382,7 @@ bool FreespacePlannerNode::isPlanRequired()
       return true;
     }
   }
-
+  
   return false;
 }
 
@@ -421,14 +421,17 @@ void FreespacePlannerNode::onTimer()
     return;
   }
 
-  if (!isActive(scenario_)) {
-    reset();
-    return;
-  }
+  
+
+  // if (!isActive(scenario_)) {
+  //   reset();
+  //   return;
+  // }
 
   if (is_completed_) {
     return;
   }
+  
 
   // Get current pose
   constexpr const char * vehicle_frame = "base_link";
@@ -451,6 +454,7 @@ void FreespacePlannerNode::onTimer()
     reset();
 
     // Plan new trajectory
+    
     planTrajectory();
   }
 
@@ -491,6 +495,7 @@ void FreespacePlannerNode::planTrajectory()
     goal_pose_.pose, getTransform(occupancy_grid_->header.frame_id, goal_pose_.header.frame_id));
 
   // execute planning
+  
   const rclcpp::Time start = get_clock()->now();
   const bool result = algo_->makePlan(start_pose_in_costmap_frame, goal_pose_in_costmap_frame);
   const rclcpp::Time end = get_clock()->now();
