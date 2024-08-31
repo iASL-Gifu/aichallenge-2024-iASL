@@ -208,8 +208,8 @@ CostmapGenerator::CostmapGenerator(const rclcpp::NodeOptions & node_options)
     "~/input/scenario", 1, std::bind(&CostmapGenerator::onScenario, this, _1));
 
   // セクション変化のサブスクリプションを作成
-  section_change_subscriber_ = this->create_subscription<std_msgs::msg::Int32>(
-    "~/input/section_change", 10, std::bind(&CostmapGenerator::sectionChangeCallback, this, _1));
+  object_change_subscriber_ = this->create_subscription<std_msgs::msg::Int32>(
+    "~/input/object_change", 10, std::bind(&CostmapGenerator::objectChangeCallback, this, _1));
 
 
   // Publishers
@@ -298,45 +298,49 @@ void CostmapGenerator::onScenario(const tier4_planning_msgs::msg::Scenario::Cons
   scenario_ = msg;
 }
 
-void CostmapGenerator::sectionChangeCallback(const std_msgs::msg::Int32::SharedPtr msg)
+void CostmapGenerator::objectChangeCallback(const std_msgs::msg::Int32::SharedPtr msg)
 {
-  section_event_ = msg;
+  object_event_ = msg;
 
   if (!isActive()) {
     return;
   }
 
-  // Get current pose
-  geometry_msgs::msg::TransformStamped tf;
-  try {
-    tf = tf_buffer_.lookupTransform(
-      costmap_frame_, vehicle_frame_, rclcpp::Time(0), rclcpp::Duration::from_seconds(1.0));
-  } catch (tf2::TransformException & ex) {
-    RCLCPP_ERROR(this->get_logger(), "%s", ex.what());
-    return;
+  if (object_event_->data == 3 || object_event_->data == 7)
+  {
+
+    // Get current pose
+    geometry_msgs::msg::TransformStamped tf;
+    try {
+      tf = tf_buffer_.lookupTransform(
+        costmap_frame_, vehicle_frame_, rclcpp::Time(0), rclcpp::Duration::from_seconds(1.0));
+    } catch (tf2::TransformException & ex) {
+      RCLCPP_ERROR(this->get_logger(), "%s", ex.what());
+      return;
+    }
+
+    // Set grid center
+    grid_map::Position p;
+    p.x() = tf.transform.translation.x;
+    p.y() = tf.transform.translation.y;
+    costmap_.setPosition(p);
+
+    if ((use_wayarea_ || use_parkinglot_) && lanelet_map_) {
+      costmap_[LayerName::primitives] = generatePrimitivesCostmap();
+    }
+
+    if (use_objects_ && objects_) {
+      costmap_[LayerName::objects] = generateObjectsCostmap(objects_);
+    }
+
+    if (use_points_ && points_) {
+      costmap_[LayerName::points] = generatePointsCostmap(points_);
+    }
+
+    costmap_[LayerName::combined] = generateCombinedCostmap();
+
+    publishCostmap(costmap_);
   }
-
-  // Set grid center
-  grid_map::Position p;
-  p.x() = tf.transform.translation.x;
-  p.y() = tf.transform.translation.y;
-  costmap_.setPosition(p);
-
-  if ((use_wayarea_ || use_parkinglot_) && lanelet_map_) {
-    costmap_[LayerName::primitives] = generatePrimitivesCostmap();
-  }
-
-  if (use_objects_ && objects_) {
-    costmap_[LayerName::objects] = generateObjectsCostmap(objects_);
-  }
-
-  if (use_points_ && points_) {
-    costmap_[LayerName::points] = generatePointsCostmap(points_);
-  }
-
-  costmap_[LayerName::combined] = generateCombinedCostmap();
-
-  publishCostmap(costmap_);
 }
 
 // void CostmapGenerator::onTimer()

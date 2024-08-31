@@ -120,7 +120,7 @@ private:
   rclcpp::Subscription<autoware_auto_mapping_msgs::msg::HADMapBin>::SharedPtr sub_lanelet_bin_map_;
   rclcpp::Subscription<tier4_planning_msgs::msg::Scenario>::SharedPtr sub_scenario_;
 
-  rclcpp::Subscription<std_msgs::msg::Int32>::SharedPtr section_change_subscriber_;
+  rclcpp::Subscription<std_msgs::msg::Int32>::SharedPtr object_change_subscriber_;
 
    
 
@@ -135,7 +135,7 @@ private:
   ObjectsToCostmap objects2costmap_;
 
   tier4_planning_msgs::msg::Scenario::ConstSharedPtr scenario_;
-  std::shared_ptr<std_msgs::msg::Int32> section_event_;
+  std::shared_ptr<std_msgs::msg::Int32> object_event_;
 
   struct LayerName
   {
@@ -165,7 +165,7 @@ private:
 
   void onTimer();
 
-  void sectionChangeCallback(const std_msgs::msg::Int32::SharedPtr msg);
+  void objectChangeCallback(const std_msgs::msg::Int32::SharedPtr msg);
 
   bool isActive();
 
