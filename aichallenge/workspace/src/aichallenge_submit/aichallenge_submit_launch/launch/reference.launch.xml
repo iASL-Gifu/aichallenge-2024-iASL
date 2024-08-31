@@ -187,7 +187,7 @@
               <remap from="~/output/hazard_lights_cmd" to="/planning/hazard_lights_cmd" />
               <remap from="~/output/modified_goal" to="/planning/scenario_planning/modified_goal" />
 
-              <param name="bt_tree_config_path" value="$(find-pkg-share aichallenge_submit_launch)/param/planning/behavior_path_planner/behavior_path_planner_tree.xml"/>
+              <param name="bt_tree_config_path" value="$(find-pkg-share aichallenge_submit_launch)/config/behavior_path_planner_tree.xml"/>
               <param name="lane_change.enable_abort_lane_change" value="false"/>
               <param name="lane_change.enable_collision_check_at_prepare_phase" value="false"/>
               <param name="lane_change.use_predicted_path_outside_lanelet" value="false"/>
@@ -283,7 +283,7 @@
 
     <!-- costmap  -->
 
-    <!-- <arg name="vehicle_param_file" default="$(find-pkg-share racing_kart_description)/config/vehicle_info.param.yaml"/>
+    <arg name="vehicle_param_file" default="$(find-pkg-share racing_kart_description)/config/vehicle_info.param.yaml"/>
     <include file="$(find-pkg-share costmap_generator)/launch/costmap_generator.launch.xml">
         <arg name="input_objects" value="/perception/object_recognition/objects_filtered"/>
         <arg name="input_points_no_ground" value="/perception/obstacle_segmentation/pointcloud"/>
@@ -293,13 +293,13 @@
         <arg name="output_grid_map" value="costmap_generator/grid_map"/>
         <arg name="output_occupancy_grid" value="costmap_generator/occupancy_grid"/>
         <arg name="vehicle_param_file" value="$(var vehicle_param_file)"/>
-    </include> -->
+    </include>
 
       <!-- costmap End -->
 
       <!-- freespace_planner -->
 
-      <!-- <arg name="vehicle_param_file" default="$(find-pkg-share racing_kart_description)/config/vehicle_info.param.yaml"/>
+      <arg name="vehicle_param_file" default="$(find-pkg-share racing_kart_description)/config/vehicle_info.param.yaml"/>
 
       <include file="$(find-pkg-share freespace_planner)/launch/freespace_planner.launch.xml">
         <arg name="input_route" value="/planning/scenario_planning/route"/> 
@@ -310,16 +310,16 @@
         <arg name="is_completed" value="/planning/scenario_planning/parking/is_completed"/>
         <arg name="param_file" value="$(find-pkg-share aichallenge_submit_launch)/param/planning/freespace_planner/freespace_planner.param.yaml"/>
         <arg name="vehicle_param_file" value="$(var vehicle_param_file)"/>
-      </include> -->
+      </include>
 
       <!-- freespace_planner  End -->
 
       <!-- trajectory_manager -->
-      <!-- <node pkg="trajectory_manager" exec="trajectory_manage_node" name="trajectory_manage_node" output="screen">
+      <node pkg="trajectory_manager" exec="trajectory_manage_node" name="trajectory_manage_node" output="screen">
         <remap from="~/input/trajectory" to="/planning/scenario_planning/astar/trajectory"/>
         <remap from="~/input/object_event" to="/perception/object_event"/>
         <remap from="~/output/trajectory" to="/planning/scenario_planning/astar/managed_trajectory"/>
-      </node> -->
+      </node>
 
       <!-- trajectory_manager End -->
 
@@ -329,7 +329,7 @@
         <remap from="/scenario" to="/planning/pit_stop/scenario"/>
         <remap from="/status" to="/aichallenge/awsim/status"/>
         <remap from="/trajectory_pit" to="/planning/scenario_planning/trajectory"/>
-        <remap from="/trajectory_lane" to="/planning/scenario_planning/avoidance/trajectory"/>
+        <remap from="/trajectory_lane" to="/planning/scenario_planning/astar/trajectory"/>
         <!-- <remap from="/trajectory_lane" to="/planning/scenario_planning/astar/trajectory"/> -->
         <remap from="/trajectory_avoidance" to="/planning/scenario_planning/avoidance/trajectory"/>
         <remap from="/selected_trajectory" to="/planning/scenario_planning/selected_trajectory"/>
