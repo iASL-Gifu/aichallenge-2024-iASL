@@ -102,6 +102,7 @@
 
   <!-- object_info_publisher-->
   <node pkg="object_info_publisher" exec="object_info_publisher_node" name="object_info_publisher_node" output="screen">
+    <param name="scale" value="1.5" />
   </node>
   <!-- object_info_publisher End-->
 
