@@ -107,7 +107,7 @@
 
   <!-- object_event_handler-->
   <node pkg="object_event_handler" exec="object_event_node" name="object_event_node" output="screen">
-    <remap from="~/input/objects" to="/aichallenge/objects" />
+    <remap from="~/input/objects" to="/perception/object_recognition/objects_filtered" />
     <remap from="~/output/object_event" to="/perception/object_event" />
   </node>
   <!-- object_event_handler End-->
