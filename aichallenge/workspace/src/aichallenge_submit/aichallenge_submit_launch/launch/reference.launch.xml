@@ -102,7 +102,7 @@
 
   <!-- object_info_publisher-->
   <node pkg="object_info_publisher" exec="object_info_publisher_node" name="object_info_publisher_node" output="screen">
-    <param name="scale" value="1.5" />
+    <param name="scale" value="0.5" />
   </node>
   <!-- object_info_publisher End-->
 
@@ -331,7 +331,7 @@
         <remap from="/status" to="/aichallenge/awsim/status"/>
         <remap from="/trajectory_pit" to="/planning/scenario_planning/trajectory"/>
         <remap from="/trajectory_lane" to="/planning/scenario_planning/avoidance/trajectory"/>
-        <!-- <remap from="/trajectory_lane" to="/planning/scenario_planning/astar/trajectory"/> -->
+        <!-- <remap from="/trajectory_lane" to="/planning/scenario_planning/astar/managed_trajectory"/> -->
         <remap from="/trajectory_avoidance" to="/planning/scenario_planning/avoidance/trajectory"/>
         <remap from="/selected_trajectory" to="/planning/scenario_planning/selected_trajectory"/>
       </node>
