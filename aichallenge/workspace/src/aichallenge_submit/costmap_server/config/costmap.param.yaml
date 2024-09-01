@@ -1,19 +1,14 @@
 /**:
   ros__parameters:
     outside_cost: 127
-    wall_inflation_radius: 2.0
-    wall_min_cost: 0
-    wall_max_cost: 100
+    wall_inflation_radius: 0.5
+    wall_min_cost: 101
+    wall_max_cost: 120
 
     object_inside_cost: 100
-    object_inside_radius: 1.0
-    inside_min_cost: 70
-    inside_max_cost: 100
-    object_inflation_radius: 2.0
-    object_min_cost: 20
+    object_inflation_radius: 4.0
+    object_min_cost: 0
     object_max_cost: 100
 
-    sample: 127
-
-    aa: 230
-    bb: 90
+    object_long_side: 3.0
+    object_short_side: 1.5

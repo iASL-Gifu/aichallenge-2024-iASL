@@ -38,7 +38,7 @@ input_files = {
     'long_right': './csv/osm_to_csv/long_right.csv',
 }
 
-center_path = './csv/csv_to_osm/gray_aichallenge.csv'
+center_path = './csv/csv_to_osm/raceline.csv'
 short_center = './csv/osm_to_csv/short_center.csv'
 
 with open(short_center, newline='') as file:
@@ -47,7 +47,7 @@ with open(short_center, newline='') as file:
     short_center_first_point = (float(first_row['local_x']), float(first_row['local_y']))
 
 center_points = []
-downsample_interval = 5  # n個ごとに1つのデータポイントを選択
+downsample_interval = 1  # n個ごとに1つのデータポイントを選択
 
 with open(center_path, newline='') as file:
     reader = csv.reader(file)

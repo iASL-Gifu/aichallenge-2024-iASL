@@ -37,7 +37,7 @@ private:
             next_point.point.pose.orientation.z = point.pose.orientation.z;
             next_point.point.pose.orientation.w = point.pose.orientation.w;
 
-            next_point.point.longitudinal_velocity_mps = 10.0;
+            next_point.point.longitudinal_velocity_mps = 100.0;
             next_point.point.lateral_velocity_mps = 0.0;
             next_point.point.heading_rate_rps = 0.0;
             next_point.point.is_final = false;

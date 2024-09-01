@@ -36,6 +36,95 @@
     <param from="$(find-pkg-share obstacle_avoidance)/config/avoidance.param.yaml" />
   </node>
 
+  <node pkg="create_route" exec="create_route" name="create_route_0" output="screen">
+    <param from="$(find-pkg-share create_route)/config/create.param.yaml" />
+    <param name="section_count" value="0" />
+    <param name="left_start_index" value="0" />
+    <param name="left_end_index" value="23" />
+    <param name="right_start_index" value="0" />
+    <param name="right_end_index" value="20" />
+    <param name="center_start_index" value="0" />
+    <param name="center_end_index" value="35" />
+  </node>
+
+  <node pkg="create_route" exec="create_route" name="create_route_1" output="screen">
+    <param from="$(find-pkg-share create_route)/config/create.param.yaml" />
+    <param name="section_count" value="1" />
+    <param name="left_start_index" value="23" />
+    <param name="left_end_index" value="48" />
+    <param name="right_start_index" value="20" />
+    <param name="right_end_index" value="48" />
+    <param name="center_start_index" value="35" />
+    <param name="center_end_index" value="70" />
+  </node>
+
+  <node pkg="create_route" exec="create_route" name="create_route_2" output="screen">
+    <param from="$(find-pkg-share create_route)/config/create.param.yaml" />
+    <param name="section_count" value="2" />
+    <param name="left_start_index" value="48" />
+    <param name="left_end_index" value="100" />
+    <param name="right_start_index" value="48" />
+    <param name="right_end_index" value="90" />
+    <param name="center_start_index" value="75" />
+    <param name="center_end_index" value="130" />
+  </node>
+
+  <node pkg="create_route" exec="create_route" name="create_route_3" output="screen">
+    <param from="$(find-pkg-share create_route)/config/create.param.yaml" />
+    <param name="section_count" value="3" />
+    <param name="left_start_index" value="100" />
+    <param name="left_end_index" value="135" />
+    <param name="right_start_index" value="90" />
+    <param name="right_end_index" value="135" />
+    <param name="center_start_index" value="130" />
+    <param name="center_end_index" value="175" />
+  </node>
+
+    <node pkg="create_route" exec="create_route" name="create_route_4" output="screen">
+    <param from="$(find-pkg-share create_route)/config/create.param.yaml" />
+    <param name="section_count" value="4" />
+    <param name="left_start_index" value="135" />
+    <param name="left_end_index" value="165" />
+    <param name="right_start_index" value="135" />
+    <param name="right_end_index" value="167" />
+    <param name="center_start_index" value="175" />
+    <param name="center_end_index" value="210" />
+  </node>
+
+  <node pkg="create_route" exec="create_route" name="create_route_5" output="screen">
+    <param from="$(find-pkg-share create_route)/config/create.param.yaml" />
+    <param name="section_count" value="5" />
+    <param name="left_start_index" value="165" />
+    <param name="left_end_index" value="198" />
+    <param name="right_start_index" value="167" />
+    <param name="right_end_index" value="192" />
+    <param name="center_start_index" value="210" />
+    <param name="center_end_index" value="240" />
+  </node>
+
+  <node pkg="create_route" exec="create_route" name="create_route_6" output="screen">
+    <param from="$(find-pkg-share create_route)/config/create.param.yaml" />
+    <param name="section_count" value="6" />
+    <param name="left_start_index" value="198" />
+    <param name="left_end_index" value="241" />
+    <param name="right_start_index" value="192" />
+    <param name="right_end_index" value="240" />
+    <param name="center_start_index" value="240" />
+    <param name="center_end_index" value="290" />
+  </node>
+
+  <node pkg="create_route" exec="create_route" name="create_route_7" output="screen">
+    <param from="$(find-pkg-share create_route)/config/create.param.yaml" />
+    <param name="section_count" value="7" />
+    <param name="left_start_index" value="241" />
+    <param name="left_end_index" value="169" />
+    <param name="right_start_index" value="240" />
+    <param name="right_end_index" value="259" />
+    <param name="center_start_index" value="290" />
+    <param name="center_end_index" value="320" />
+  </node>
+
+
   <!-- path visualizer -->
   <!-- <node pkg="path_visualizer" exec="path_visualizer" name="path_visualizer" output="screen">
   </node> -->

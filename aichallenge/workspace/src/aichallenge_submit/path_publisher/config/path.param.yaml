@@ -1,8 +1,37 @@
 /**:
   ros__parameters:
-    csv_path: "/aichallenge/workspace/src/aichallenge_submit/path_publisher/csv/centerline.csv"
-    downsample_rate: 5
-    loop_count: 7
+    raceline_csv_path: "/aichallenge/workspace/src/aichallenge_submit/path_publisher/csv/raceline.csv"
+    centerline_csv_path: "/aichallenge/workspace/src/aichallenge_submit/path_publisher/csv/centerline.csv"
+    raceline_downsample_rate: 1
+    centerline_downsample_rate: 5
     publish_rate: 100
 
     margin: 40
+
+    section_point:
+    # section0の終わりのx, y座標
+      - 89615.9503
+      - 43166.0921
+      
+      - 89644.6691
+      - 43137.9237
+
+      - 89621.5397
+      - 43187.3888
+
+      - 89661.3908
+      - 43184.7076
+
+      - 89650.0923
+      - 43160.2605
+
+      - 89677.2845
+      - 43165.8562
+
+      - 89656.3477
+      - 43134.4543
+
+      - 89633.5546
+      - 43128.2031
+
+    start_index: 340
