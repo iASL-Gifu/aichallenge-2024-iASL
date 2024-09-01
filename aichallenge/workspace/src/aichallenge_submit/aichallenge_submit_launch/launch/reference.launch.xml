@@ -297,6 +297,6 @@
     <include file="$(find-pkg-share ad_api_adaptors)/launch/rviz_adaptors.launch.xml" />
   </group>
 
-  <include file="$(find-pkg-share aichallenge_submit_launch)/launch/original_launch_at.launch.xml" />
+  <include file="$(find-pkg-share aichallenge_submit_launch)/launch/original_launch.launch.xml" />
 
 </launch>
