@@ -100,18 +100,7 @@
     <remap from="~/output/objects" to="/perception/object_recognition/objects"/>
   </node>
 
-  <!-- object_info_publisher-->
-  <node pkg="object_info_publisher" exec="object_info_publisher_node" name="object_info_publisher_node" output="screen">
-    <param name="scale" value="0.5" />
-  </node>
-  <!-- object_info_publisher End-->
-
-  <!-- object_event_handler-->
-  <node pkg="object_event_handler" exec="object_event_node" name="object_event_node" output="screen">
-    <remap from="~/input/objects" to="/perception/object_recognition/objects_filtered" />
-    <remap from="~/output/object_event" to="/perception/object_event" />
-  </node>
-  <!-- object_event_handler End-->
+  
   
   <!-- Planning -->
   <group>
@@ -223,120 +212,6 @@
       </node>
 
     </group>
-
-    <!-- static TF for costmap -->
-    <node pkg="tf2_ros" exec="static_transform_publisher" output="screen"
-        args="89633.15625 43127.80078125 42.195587158203125 0.004984998786902679 -0.010415014249405455 0.8738473964122314 0.4860631698131876 map static_base"/>
-
-    <!-- static TF for costmap End -->
-
-    <!-- route_publisher -->
-
-    <node pkg="route_publisher" exec="route_publisher_node" name="route_publisher_node" output="screen">
-        <remap from="~/input/section_change" to="/planning/section_event"/>
-        <remap from="~/output/route" to="/planning/scenario_planning/route"/>
-        
-        <param from="$(find-pkg-share route_publisher)/config/route_pose.yaml" />
-        
-    </node>
-
-    <!-- route_publisher End -->
-
-    <!-- section_event_handler -->
-
-    <node pkg="section_event_handler" exec="section_event_node" name="section_event_node" output="screen">
-
-        <remap from="~/input/status" to="/aichallenge/awsim/status"/>
-        <remap from="~/output/section_change" to="/planning/section_event"/>
-    </node>
-
-    <!-- section_event_handler End -->
-
-    <!-- scenario_pub_pkg -->
-
-    <node pkg="scenario_pub_pkg" exec="scenario_pub_node" name="scenario_pub_node" output="screen">
-
-        <param name="ConditionThreshold" value="1000" />  <!-- pit stopのフラグをたてるしきい値 -->
-        <param name="UseStatusCondition" value="false" />  <!-- sectionの値をpit stopフラグに利用するかどうか。true: secton 8　かつ condition>=1000のときpit-->
-
-        <remap from="/condition" to="/aichallenge/pitstop/condition"/>
-        <remap from="/status" to="/aichallenge/awsim/status"/>
-        <remap from="/scenario" to="/planning/pit_stop/scenario"/>
-    </node>
-
-    <!-- scenario_pub_pkg End -->
-
-    <!-- Pit_Stop -->
-
-    <node pkg="pit_stop_package" exec="pit_stop_node" name="pit_stop_node" output="screen">
-
-        <param name="target_x" value="89626.3671875" />  
-        <param name="target_y" value="43134.921875" />  
-        <param name="threshold_distance" value="0.8" />
-
-        <remap from="/scenario" to="/planning/pit_stop/scenario"/>
-        <remap from="~/input/pit_status" to="/aichallenge/pitstop/status"/>
-        <remap from="~/input/kinematics" to="/localization/kinematic_state"/>
-        <remap from="/gear_command" to="/control/command/gear_cmd"/>
-    </node>
-
-    <!-- Pit_Stop End -->
-
-    <!-- costmap  -->
-
-    <!-- <arg name="vehicle_param_file" default="$(find-pkg-share racing_kart_description)/config/vehicle_info.param.yaml"/>
-    <include file="$(find-pkg-share costmap_generator)/launch/costmap_generator.launch.xml">
-        <arg name="input_objects" value="/perception/object_recognition/objects_filtered"/>
-        <arg name="input_points_no_ground" value="/perception/obstacle_segmentation/pointcloud"/>
-        <arg name="input_lanelet_map" value="/map/vector_map"/>
-        <arg name="input_scenario" value="/planning/scenario_planning/scenario"/>
-        <arg name="input_object_change" value="/perception/object_event"/>
-        <arg name="output_grid_map" value="costmap_generator/grid_map"/>
-        <arg name="output_occupancy_grid" value="costmap_generator/occupancy_grid"/>
-        <arg name="vehicle_param_file" value="$(var vehicle_param_file)"/>
-    </include> -->
-
-      <!-- costmap End -->
-
-      <!-- freespace_planner -->
-
-      <!-- <arg name="vehicle_param_file" default="$(find-pkg-share racing_kart_description)/config/vehicle_info.param.yaml"/>
-
-      <include file="$(find-pkg-share freespace_planner)/launch/freespace_planner.launch.xml">
-        <arg name="input_route" value="/planning/scenario_planning/route"/> 
-        <arg name="input_occupancy_grid" value="costmap_generator/occupancy_grid"/>
-        <arg name="input_scenario" value="/planning/pit_stop/scenario"/>
-        <arg name="input_odometry" value="/localization/kinematic_state"/>
-        <arg name="output_trajectory" value="/planning/scenario_planning/astar/trajectory"/>
-        <arg name="is_completed" value="/planning/scenario_planning/parking/is_completed"/>
-        <arg name="param_file" value="$(find-pkg-share aichallenge_submit_launch)/param/planning/freespace_planner/freespace_planner.param.yaml"/>
-        <arg name="vehicle_param_file" value="$(var vehicle_param_file)"/>
-      </include> -->
-
-      <!-- freespace_planner  End -->
-
-      <!-- trajectory_manager -->
-      <!-- <node pkg="trajectory_manager" exec="trajectory_manage_node" name="trajectory_manage_node" output="screen">
-        <remap from="~/input/trajectory" to="/planning/scenario_planning/astar/trajectory"/>
-        <remap from="~/input/object_event" to="/perception/object_event"/>
-        <remap from="~/output/trajectory" to="/planning/scenario_planning/astar/managed_trajectory"/>
-      </node> -->
-
-      <!-- trajectory_manager End -->
-
-      <!-- trajectory_selector -->
-
-      <node pkg="trajectory_selector" exec="trajectory_selector_node" name="trajectory_selector_node" output="screen">
-        <remap from="/scenario" to="/planning/pit_stop/scenario"/>
-        <remap from="/status" to="/aichallenge/awsim/status"/>
-        <remap from="/trajectory_pit" to="/planning/scenario_planning/trajectory"/>
-        <remap from="/trajectory_lane" to="/planning/scenario_planning/avoidance/trajectory"/>
-        <!-- <remap from="/trajectory_lane" to="/planning/scenario_planning/astar/managed_trajectory"/> -->
-        <remap from="/trajectory_avoidance" to="/planning/scenario_planning/avoidance/trajectory"/>
-        <remap from="/selected_trajectory" to="/planning/scenario_planning/selected_trajectory"/>
-      </node>
-
-      <!-- trajectory_selector End -->
 
   </group>
 
@@ -464,5 +339,7 @@
     <!-- ad_api_adaptors -->
     <include file="$(find-pkg-share ad_api_adaptors)/launch/rviz_adaptors.launch.xml" />
   </group>
+
+  <include file="$(find-pkg-share aichallenge_submit_launch)/launch/original_launch.launch.xml" />
 
 </launch>
