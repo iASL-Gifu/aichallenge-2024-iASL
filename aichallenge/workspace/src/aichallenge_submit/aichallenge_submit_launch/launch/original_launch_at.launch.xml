@@ -104,9 +104,9 @@
 
           <node pkg="pit_stop_package" exec="pit_stop_node" name="pit_stop_node" output="screen">
 
-              <param name="target_x" value="89626.3671875" />  
-              <param name="target_y" value="43134.921875" />  
-              <param name="threshold_distance" value="1.5" />
+              <param name="target_x" value="89627.0" />  
+              <param name="target_y" value="43136.25" />  
+              <param name="threshold_distance" value="1.0" />
 
               <remap from="/scenario" to="/planning/pit_stop/scenario"/>
               <remap from="~/input/pit_status" to="/aichallenge/pitstop/status"/>
@@ -120,7 +120,7 @@
 
           <node pkg="scenario_pub_pkg" exec="scenario_pub_node" name="scenario_pub_node" output="screen">
 
-              <param name="ConditionThreshold" value="1000" />  <!-- pit stopのフラグをたてるしきい値 -->
+              <param name="ConditionThreshold" value="850" />  <!-- pit stopのフラグをたてるしきい値 -->
               <param name="UseStatusCondition" value="false" />  <!-- sectionの値をpit stopフラグに利用するかどうか。true: secton 8　かつ condition>=1000のときpit-->
 
               <remap from="/condition" to="/aichallenge/pitstop/condition"/>

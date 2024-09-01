@@ -20,7 +20,8 @@ public:
         this->declare_parameter("goal_pose.orientation.z", 0.0);
         this->declare_parameter("goal_pose.orientation.w", 0.0);
 
-        this->declare_parameter("target_threthold", 2.0);
+        this->declare_parameter("proximity_threshold_harf", 2.0);
+        this->declare_parameter("proximity_threshold_goal", 2.0);
         this->declare_parameter("delay_route_publish_ms", 500);
 
         // YAMLファイルからのパラメータの取得
@@ -36,8 +37,12 @@ public:
 
         this->get_parameter("harf_pose.position.x", target_pose_x);
         this->get_parameter("harf_pose.position.y", target_pose_y);
+        this->get_parameter("proximity_threshold_harf", target_pose_r);
 
-        this->get_parameter("target_threthold", proximity_threshold_);
+        // ２つのしきい値パラメータを取得
+        this->get_parameter("proximity_threshold_harf", proximity_threshold_harf_);
+        this->get_parameter("proximity_threshold_goal", proximity_threshold_goal_);
+        this->get_parameter("delay_route_publish_ms", delay_time);
 
         // サブスクリプションの作成
         object_change_sub_ = this->create_subscription<std_msgs::msg::Int32>(
@@ -72,11 +77,13 @@ private:
         double current_x = odometry_->pose.pose.position.x;
         double current_y = odometry_->pose.pose.position.y;
 
-        // 目標地点との距離を計算
+        
+        
         double distance_to_goal = std::hypot(current_x - target_pose_x, current_y - target_pose_y);
+            
 
         // 距離が閾値より小さい場合にトリガーを引く
-        if (distance_to_goal < proximity_threshold_)
+        if (distance_to_goal < target_pose_r)
         {
             publish_route();
         }
@@ -88,7 +95,7 @@ private:
         auto route_msg = autoware_planning_msgs::msg::LaneletRoute();
         route_msg.header.frame_id = "map";
 
-        if (current_section_ == 3 || current_section_ == 4)
+        if (current_section_ == 3 || current_section_ == 4 || current_section_ == 5)
         {
             route_msg.start_pose.position.x = goal_pose_x_;
             route_msg.start_pose.position.y = goal_pose_y_;
@@ -102,9 +109,10 @@ private:
 
             target_pose_x = goal_pose_x_;
             target_pose_y = goal_pose_y_;
+            target_pose_r = proximity_threshold_goal_;
 
             RCLCPP_INFO(this->get_logger(), "target pit pose");
-            // std::this_thread::sleep_for(std::chrono::milliseconds(delay_time));  // 500ミリ秒のDelay
+            std::this_thread::sleep_for(std::chrono::milliseconds(delay_time));  // 500ミリ秒のDelay
 
         }
         else if (current_section_ == 7)
@@ -121,6 +129,7 @@ private:
 
             target_pose_x = harf_pose_x_;
             target_pose_y = harf_pose_y_;
+            target_pose_r = proximity_threshold_harf_;
 
             RCLCPP_INFO(this->get_logger(), "target harf pose");
         }
@@ -131,8 +140,9 @@ private:
     // メンバ変数
     double harf_pose_x_, harf_pose_y_, goal_pose_x_, goal_pose_y_;
     double harf_orientation_z_, harf_orientation_w_, goal_orientation_z_, goal_orientation_w_;
-    double target_pose_x , target_pose_y;
-    double proximity_threshold_ = 5.0; // 目標地点に近づいたと判断する距離の閾値（メートル）
+    double target_pose_x , target_pose_y, target_pose_r;
+    double proximity_threshold_harf_ = 5.0; // ハーフポーズ用の閾値
+    double proximity_threshold_goal_ = 5.0; // ゴールポーズ用の閾値
     int delay_time;
     int current_section_ = 0;
     nav_msgs::msg::Odometry::SharedPtr odometry_;
