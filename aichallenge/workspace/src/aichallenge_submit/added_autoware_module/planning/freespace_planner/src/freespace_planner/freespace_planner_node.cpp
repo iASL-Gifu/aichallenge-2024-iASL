@@ -382,7 +382,7 @@ bool FreespacePlannerNode::isPlanRequired()
       return true;
     }
   }
-  
+
   return false;
 }
 
@@ -418,10 +418,9 @@ void FreespacePlannerNode::onTimer()
 {
   // Check all inputs are ready
   if (!occupancy_grid_ || !route_ || !scenario_ || !odom_) {
+    RCLCPP_INFO(get_logger(), "Topic not ready");
     return;
   }
-
-  
 
   // if (!isActive(scenario_)) {
   //   reset();
@@ -431,13 +430,11 @@ void FreespacePlannerNode::onTimer()
   if (is_completed_) {
     return;
   }
-  
 
   // Get current pose
   constexpr const char * vehicle_frame = "base_link";
   current_pose_ = tier4_autoware_utils::transform2pose(
     getTransform(occupancy_grid_->header.frame_id, vehicle_frame));
-
   if (current_pose_.header.frame_id == "") {
     return;
   }
@@ -454,7 +451,6 @@ void FreespacePlannerNode::onTimer()
     reset();
 
     // Plan new trajectory
-    
     planTrajectory();
   }
 
@@ -490,13 +486,12 @@ void FreespacePlannerNode::planTrajectory()
   const auto start_pose_in_costmap_frame = transformPose(
     start_pose_.pose, getTransform(occupancy_grid_->header.frame_id, start_pose_.header.frame_id));
 
-
   const auto goal_pose_in_costmap_frame = transformPose(
     goal_pose_.pose, getTransform(occupancy_grid_->header.frame_id, goal_pose_.header.frame_id));
 
   // execute planning
-  
   const rclcpp::Time start = get_clock()->now();
+  // const bool result = algo_->makePlan(current_pose_in_costmap_frame, goal_pose_in_costmap_frame);
   const bool result = algo_->makePlan(start_pose_in_costmap_frame, goal_pose_in_costmap_frame);
   const rclcpp::Time end = get_clock()->now();
 

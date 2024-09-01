@@ -1,13 +1,27 @@
 /**:
   ros__parameters:
+    
+    # harf_pose:
+    #   position.x: 89657.3262 #89653.7
+    #   position.y: 43176.6794 #43122.5
+    #   position.z: -28.0
+    #   orientation.x: 0.0
+    #   orientation.y: 0.0
+    #   orientation.z: -0.90
+    #   orientation.w: 0.25
+
     harf_pose:
-      position.x: 89657.3262 #89653.7
-      position.y: 43176.6794 #43122.5
-      position.z: -28.0
-      orientation.x: 0.0
-      orientation.y: 0.0
-      orientation.z: -0.90
-      orientation.w: 0.25
+      position:
+        x: 89648.5703125
+        y: 43162.4453125
+        z: 42.55665969848633
+      orientation:
+        x: 0.0
+        y: 0.0
+        z: -0.18118175619550675
+        w: 0.9832490337203816
+
+
 
     # goal_pose:
     #   position.x: 89652.1413 #89653.7
@@ -18,7 +32,7 @@
     #   orientation.z: -0.971732
     #   orientation.w: 0.236088
 
-    #pit
+    # pit
     goal_pose:
       position.x: 89626.3671875
       position.y: 43134.921875
@@ -27,3 +41,5 @@
       orientation.y: -0.0
       orientation.z: -0.8788172006607056
       orientation.w: -0.47715866565704346
+
+    target_threthold: 1.0

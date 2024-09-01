@@ -15,8 +15,8 @@
     # -- Configurations common to the all planners --
     # base configs
     time_limit: 30000.0
-    minimum_turning_radius: 9.0
-    maximum_turning_radius: 9.0
+    minimum_turning_radius: 5.0 #9.0
+    maximum_turning_radius: 10.0 #9.0
     turning_radius_size: 1
     # search configs
     theta_size: 144
@@ -31,5 +31,6 @@
     # -- A* search Configurations --
     astar:
       only_behind_solutions: false
-      use_back: true
+      use_back: false
+      # use_back: true
       distance_heuristic_weight: 1.0

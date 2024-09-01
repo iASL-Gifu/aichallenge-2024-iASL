@@ -68,27 +68,27 @@ namespace
 {
 
 // Copied from scenario selector
-geometry_msgs::msg::PoseStamped::ConstSharedPtr getCurrentPose(
-  const tf2_ros::Buffer & tf_buffer, const rclcpp::Logger & logger)
-{
-  geometry_msgs::msg::TransformStamped tf_current_pose;
+// geometry_msgs::msg::PoseStamped::ConstSharedPtr getCurrentPose(
+//   const tf2_ros::Buffer & tf_buffer, const rclcpp::Logger & logger)
+// {
+//   geometry_msgs::msg::TransformStamped tf_current_pose;
 
-  try {
-    tf_current_pose = tf_buffer.lookupTransform("map", "base_link", tf2::TimePointZero);
-  } catch (tf2::TransformException & ex) {
-    RCLCPP_ERROR(logger, "%s", ex.what());
-    return nullptr;
-  }
+//   try {
+//     tf_current_pose = tf_buffer.lookupTransform("map", "base_link", tf2::TimePointZero);
+//   } catch (tf2::TransformException & ex) {
+//     RCLCPP_ERROR(logger, "%s", ex.what());
+//     return nullptr;
+//   }
 
-  geometry_msgs::msg::PoseStamped::SharedPtr p(new geometry_msgs::msg::PoseStamped());
-  p->header = tf_current_pose.header;
-  p->pose.orientation = tf_current_pose.transform.rotation;
-  p->pose.position.x = tf_current_pose.transform.translation.x;
-  p->pose.position.y = tf_current_pose.transform.translation.y;
-  p->pose.position.z = tf_current_pose.transform.translation.z;
+//   geometry_msgs::msg::PoseStamped::SharedPtr p(new geometry_msgs::msg::PoseStamped());
+//   p->header = tf_current_pose.header;
+//   p->pose.orientation = tf_current_pose.transform.rotation;
+//   p->pose.position.x = tf_current_pose.transform.translation.x;
+//   p->pose.position.y = tf_current_pose.transform.translation.y;
+//   p->pose.position.z = tf_current_pose.transform.translation.z;
 
-  return geometry_msgs::msg::PoseStamped::ConstSharedPtr(p);
-}
+//   return geometry_msgs::msg::PoseStamped::ConstSharedPtr(p);
+// }
 
 // copied from scenario selector
 // std::shared_ptr<lanelet::ConstPolygon3d> findNearestParkinglot(
@@ -218,7 +218,7 @@ CostmapGenerator::CostmapGenerator(const rclcpp::NodeOptions & node_options)
     this->create_publisher<nav_msgs::msg::OccupancyGrid>("~/output/occupancy_grid", 1);
 
   // Timer
-  const auto period_ns = rclcpp::Rate(update_rate_).period();
+  // const auto period_ns = rclcpp::Rate(update_rate_).period();
   // timer_ =
   //   rclcpp::create_timer(this, get_clock(), period_ns, std::bind(&CostmapGenerator::onTimer, this));
 
@@ -298,56 +298,11 @@ void CostmapGenerator::onScenario(const tier4_planning_msgs::msg::Scenario::Cons
   scenario_ = msg;
 }
 
-void CostmapGenerator::objectChangeCallback(const std_msgs::msg::Int32::SharedPtr msg)
-{
-  object_event_ = msg;
-
-  if (!isActive()) {
-    return;
-  }
-
-  if (object_event_->data == 3 || object_event_->data == 7)
-  {
-
-    // Get current pose
-    geometry_msgs::msg::TransformStamped tf;
-    try {
-      tf = tf_buffer_.lookupTransform(
-        costmap_frame_, vehicle_frame_, rclcpp::Time(0), rclcpp::Duration::from_seconds(1.0));
-    } catch (tf2::TransformException & ex) {
-      RCLCPP_ERROR(this->get_logger(), "%s", ex.what());
-      return;
-    }
-
-    // Set grid center
-    grid_map::Position p;
-    p.x() = tf.transform.translation.x;
-    p.y() = tf.transform.translation.y;
-    costmap_.setPosition(p);
-
-    if ((use_wayarea_ || use_parkinglot_) && lanelet_map_) {
-      costmap_[LayerName::primitives] = generatePrimitivesCostmap();
-    }
-
-    if (use_objects_ && objects_) {
-      costmap_[LayerName::objects] = generateObjectsCostmap(objects_);
-    }
-
-    if (use_points_ && points_) {
-      costmap_[LayerName::points] = generatePointsCostmap(points_);
-    }
-
-    costmap_[LayerName::combined] = generateCombinedCostmap();
-
-    publishCostmap(costmap_);
-  }
-}
-
 // void CostmapGenerator::onTimer()
 // {
-//   if (!isActive()) {
-//     return;
-//   }
+//   // if (!isActive()) {
+//   //   return;
+//   // }
 
 //   // Get current pose
 //   geometry_msgs::msg::TransformStamped tf;
@@ -382,27 +337,66 @@ void CostmapGenerator::objectChangeCallback(const std_msgs::msg::Int32::SharedPt
 //   publishCostmap(costmap_);
 // }
 
+void CostmapGenerator::objectChangeCallback(const std_msgs::msg::Int32::SharedPtr object_event_)
+{
+  if (object_event_->data == 4 || object_event_->data == 7) {
+    // Get current pose
+    geometry_msgs::msg::TransformStamped tf;
+    try {
+      tf = tf_buffer_.lookupTransform(
+        costmap_frame_, vehicle_frame_, rclcpp::Time(0), rclcpp::Duration::from_seconds(1.0));
+    } catch (tf2::TransformException & ex) {
+      RCLCPP_ERROR(this->get_logger(), "%s", ex.what());
+      return;
+    }
+
+    // Set grid center
+    grid_map::Position p;
+    p.x() = tf.transform.translation.x;
+    p.y() = tf.transform.translation.y;
+    costmap_.setPosition(p);
+
+    if ((use_wayarea_ || use_parkinglot_) && lanelet_map_) {
+      costmap_[LayerName::primitives] = generatePrimitivesCostmap();
+    }
+
+    if (use_objects_ && objects_) {
+      costmap_[LayerName::objects] = generateObjectsCostmap(objects_);
+    }
+
+    if (use_points_ && points_) {
+      costmap_[LayerName::points] = generatePointsCostmap(points_);
+    }
+
+    costmap_[LayerName::combined] = generateCombinedCostmap();
+
+    publishCostmap(costmap_);
+  }
+}
+
+
 bool CostmapGenerator::isActive()
 {
-  if (!lanelet_map_) {
-    return false;
-  }
+  // if (!lanelet_map_) {
+  //   return false;
+  // }
 
-  if (activate_by_scenario_) {
-    if (scenario_) {
-      const auto & s = scenario_->activating_scenarios;
-      if (
-        std::find(std::begin(s), std::end(s), tier4_planning_msgs::msg::Scenario::PARKING) !=
-        std::end(s)) {
-        return true;
-      }
-    }
-    return false;
-  } else {
-    const auto & current_pose_wrt_map = getCurrentPose(tf_buffer_, this->get_logger());
-    // return isInParkingLot(lanelet_map_, current_pose_wrt_map->pose);
-    return true ;
-  }
+  // if (activate_by_scenario_) {
+  //   if (scenario_) {
+  //     const auto & s = scenario_->activating_scenarios;
+  //     if (
+  //       std::find(std::begin(s), std::end(s), tier4_planning_msgs::msg::Scenario::PARKING) !=
+  //       std::end(s)) {
+  //       return true;
+  //     }
+  //   }
+  //   return false;
+  // } else {
+  //   const auto & current_pose_wrt_map = getCurrentPose(tf_buffer_, this->get_logger());
+  //   return isInParkingLot(lanelet_map_, current_pose_wrt_map->pose);
+  // }
+
+  return true;
 }
 
 void CostmapGenerator::initGridmap()
