@@ -20,36 +20,36 @@
   </node>
 
   <!-- map server -->
-  <!-- <include file="$(find-pkg-share aichallenge_submit_launch)/launch/map_server.launch.py">
+  <include file="$(find-pkg-share aichallenge_submit_launch)/launch/map_server.launch.py">
     <arg name="map_yaml_file" value="$(find-pkg-share aichallenge_submit_launch)/map/iASL_map.yaml" />
     <arg name="use_namespace" value="true" />
     <arg name="namespace" value="/ogm" />
-  </include> -->
+  </include>
 
   <!-- costmap publisher -->
-  <!-- <node pkg="costmap_server" exec="costmap_node" name="costmap_2d" output="screen">
+  <node pkg="costmap_server" exec="costmap_node" name="costmap_2d" output="screen">
     <param from="$(find-pkg-share costmap_server)/config/costmap.param.yaml" />
-  </node> -->
+  </node>
 
   <!-- obstacle avoidance -->
-  <!-- <node pkg="obstacle_avoidance" exec="obstacle_avoidance" name="obstacle_avoidance" output="screen">
+  <node pkg="obstacle_avoidance" exec="obstacle_avoidance" name="obstacle_avoidance" output="screen">
     <param from="$(find-pkg-share obstacle_avoidance)/config/avoidance.param.yaml" />
-  </node> -->
+  </node>
 
   <!-- path visualizer -->
   <!-- <node pkg="path_visualizer" exec="path_visualizer" name="path_visualizer" output="screen">
   </node> -->
 
   <!-- path publisher -->
-  <!-- <node pkg="path_publisher" exec="path_publisher" name="path_publisher" output="screen">
+  <node pkg="path_publisher" exec="path_publisher" name="path_publisher" output="screen">
     <param from="$(find-pkg-share path_publisher)/config/path.param.yaml" />
-  </node> -->
+  </node>
 
   <!-- path converter -->
-  <!-- <node pkg="path_conversion" exec="path_to_laneid_converter" name="path_to_laneid_converter" output="screen">
+  <node pkg="path_conversion" exec="path_to_laneid_converter" name="path_to_laneid_converter" output="screen">
     <remap from="obstacle_avoidance" to="obstacle_avoidance"/>
     <remap from="obstacle_path_with_laneid" to="/planning/avoidance/obstacle_avoidance_path"/>
     
-  </node>   -->
+  </node>  
 
 </launch>
