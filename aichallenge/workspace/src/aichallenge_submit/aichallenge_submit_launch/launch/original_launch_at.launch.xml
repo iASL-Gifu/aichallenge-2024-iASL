@@ -134,7 +134,7 @@
 
     <!-- section_event_handler -->
 
-    <ground>
+    <group>
 
         <push-ros-namespace namespace="planning"/>
 
