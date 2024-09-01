@@ -119,10 +119,7 @@ private:
     sub_objects_;
   rclcpp::Subscription<autoware_auto_mapping_msgs::msg::HADMapBin>::SharedPtr sub_lanelet_bin_map_;
   rclcpp::Subscription<tier4_planning_msgs::msg::Scenario>::SharedPtr sub_scenario_;
-
   rclcpp::Subscription<std_msgs::msg::Int32>::SharedPtr object_change_subscriber_;
-
-   
 
   rclcpp::TimerBase::SharedPtr timer_;
 

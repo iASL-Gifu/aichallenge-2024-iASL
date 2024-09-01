@@ -123,8 +123,8 @@ private:
   // variables
   std::unique_ptr<AbstractPlanningAlgorithm> algo_;
   PoseStamped current_pose_;
-  PoseStamped goal_pose_;
   PoseStamped start_pose_;
+  PoseStamped goal_pose_;
 
   Trajectory trajectory_;
   Trajectory partial_trajectory_;
