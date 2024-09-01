@@ -40,7 +40,8 @@ private:
 
     // Client
     std::vector<rclcpp::Client<path_service::srv::GetObstaclePath>::SharedPtr> get_obstacle_path_clients_;
-    bool add_path_;
+    void send_obstacle_path_request();
+    rclcpp::TimerBase::SharedPtr obstacle_path_timer_;
 
     // Server
     rclcpp::Service<path_service::srv::GetPath>::SharedPtr get_path_srv_;
@@ -66,6 +67,11 @@ private:
     std::vector<geometry_msgs::msg::PoseStamped> centerline_points_;
     std::vector<geometry_msgs::msg::PoseStamped> optimize_points_;
     std::vector<std::vector<geometry_msgs::msg::PoseStamped>> section_path_;
+
+    std::vector<bool> path_state_;
+    std::vector<bool> object_state_;
+    std::vector<bool> add_path_;
+    int section_;
 };
 
 }

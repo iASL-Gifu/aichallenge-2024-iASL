@@ -257,7 +257,7 @@ void ObstacleAvoidance::odometry_callback(const nav_msgs::msg::Odometry::SharedP
 
 void ObstacleAvoidance::send_path_request()
 {
-    RCLCPP_INFO(this->get_logger(), "aaaaaaaaaaaaaaaaaaaaaaaaa");
+    // RCLCPP_INFO(this->get_logger(), "aaaaaaaaaaaaaaaaaaaaaaaaa");
     if (get_path_centerline_) {
         // 両方のパスが取得できたらタイマーを止める
         path_timer_->cancel();

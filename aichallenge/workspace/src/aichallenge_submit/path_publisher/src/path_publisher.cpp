@@ -7,7 +7,7 @@ namespace path_publisher
 {
 
 PathPublisher::PathPublisher() 
-    : Node("path_publihser"), current_section_(0), add_path_(false)
+    : Node("path_publihser"), current_section_(0), section_(0)
 {
     RCLCPP_INFO(this->get_logger(), "================ Path Publisher ==================");
 
@@ -80,6 +80,14 @@ PathPublisher::PathPublisher()
 
     objects_coordinate_ = std::vector<std::pair<double, double>>(8, std::make_pair(0.0, 0.0));
     section_path_ = std::vector<std::vector<geometry_msgs::msg::PoseStamped>>(8);
+    path_state_ = std::vector<bool>(8, false);
+    object_state_ = std::vector<bool>(8, false);
+    add_path_ = std::vector<bool>(8, false);
+
+    obstacle_path_timer_ = this->create_wall_timer(
+        std::chrono::seconds(1), // 実行間隔を秒単位で設定
+        std::bind(&PathPublisher::send_obstacle_path_request, this)
+    );
 }
 
 void PathPublisher::path_callback(const nav_msgs::msg::Path::SharedPtr msg) {
@@ -107,19 +115,18 @@ void PathPublisher::path_callback(const nav_msgs::msg::Path::SharedPtr msg) {
 
     new_path.poses.assign(msg->poses.begin() + index, msg->poses.end());
 
-    if (add_path_) {
-        new_path.poses.insert(new_path.poses.end(), path_.poses.begin(), path_.poses.end());
-        add_path_ = false;
+    if (add_path_[section_]) {
+        RCLCPP_INFO(this->get_logger(), "VVVVVVVVVVVVVVVVVVVVVVVVVV");
+        for (int i = 0; i < path_.poses.size() - 1; i++) {
+            new_path.poses.push_back(path_.poses[i]);
+        }
+        add_path_[section_] = false;
+        path_state_[section_] = false;
+        object_state_[section_] = false;
+        section_ = (section_ + 1) % 8;
     }
 
     path_pub_->publish(new_path);
-
-    // nav_msgs::msg::Path path;
-    // path.header.stamp = this->now();
-    // path.header.frame_id = "map";
-    // path.poses = section_path_[0];
-
-    // path2_pub_->publish(path);
 }
 
 void PathPublisher::odometry_callback(const nav_msgs::msg::Odometry::SharedPtr msg) {
@@ -136,30 +143,42 @@ void PathPublisher::object_callback(const std_msgs::msg::Float64MultiArray::Shar
     double ex_x = objects_coordinate_[current_section_].first;
     double ex_y = objects_coordinate_[current_section_].second;
 
-    if (object_x == ex_x && object_y == ex_y) return; 
+    if (object_x == ex_x && object_y == ex_y) {
+        return;
+    }
 
-    RCLCPP_INFO(this->get_logger(), "Path Publisher Object Index %d", current_section_);
-
-    auto request = std::make_shared<path_service::srv::GetObstaclePath::Request>();
-    request->x = object_x;
-    request->y = object_y;
-
-    using ServiceResponseFuture = rclcpp::Client<path_service::srv::GetObstaclePath>::SharedFuture;
-
-    auto response_callback = [this](ServiceResponseFuture future) {
-        auto result = future.get();
-        path_ = result->path;
-        add_path_ = true;
-        RCLCPP_INFO(this->get_logger(), "Client Path size: %zu", path_.poses.size());
-    };
-    get_obstacle_path_clients_[current_section_]->async_send_request(request, response_callback);
-
-    RCLCPP_INFO(this->get_logger(), "Path Publisher Client");
-    RCLCPP_INFO(this->get_logger(), "Server Object x: %f, y: %f", object_x, object_y);
+    // RCLCPP_INFO(this->get_logger(), "Path Publisher Client");
+    // RCLCPP_INFO(this->get_logger(), "Server Object x: %f, y: %f", object_x, object_y);
 
     objects_coordinate_[current_section_].first = object_x;
     objects_coordinate_[current_section_].second = object_y;
+
+    object_state_[current_section_] = true;
+    path_state_[current_section_] = true;
     current_section_ = (current_section_ + 1) % 8;
+}
+
+void PathPublisher::send_obstacle_path_request() {
+    if (path_state_[section_] && !path_state_[(section_ - 1) % 8] && object_state_[section_]) {
+        RCLCPP_INFO(this->get_logger(), "TTTTTTTTTTTTTTTTTTTTT %d", section_);
+        auto request = std::make_shared<path_service::srv::GetObstaclePath::Request>();
+        double object_x = objects_coordinate_[section_].first;
+        double object_y = objects_coordinate_[section_].second;
+        request->x = object_x;
+        request->y = object_y;
+
+        using ServiceResponseFuture = rclcpp::Client<path_service::srv::GetObstaclePath>::SharedFuture;
+        
+        auto response_callback = [this](ServiceResponseFuture future) {
+            auto result = future.get();
+            path_ = result->path;
+            add_path_[section_] = true;
+            RCLCPP_INFO(this->get_logger(), "%dClient Path size: %zu", section_, path_.poses.size());
+        };
+        get_obstacle_path_clients_[section_]->async_send_request(request, response_callback);
+
+        object_state_[section_] = false;
+    }
 }
 
 void PathPublisher::handle_get_path(const std::shared_ptr<path_service::srv::GetPath::Request> request,

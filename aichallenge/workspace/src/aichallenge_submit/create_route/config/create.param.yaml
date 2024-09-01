@@ -2,7 +2,7 @@
   ros__parameters:
     start_index: 5
     end_index: 5
-    section_count: 0
+    section_count: 1
 
     left_csv_path: "/aichallenge/workspace/src/aichallenge_submit/create_route/csv/left.csv"
     right_csv_path: "/aichallenge/workspace/src/aichallenge_submit/create_route/csv/right.csv"
@@ -11,11 +11,15 @@
     angle_interval: 10.0
     collision_checker: 1.0
 
-    left_start_index: 0
-    left_end_index: 30
+    left_start_index: 241
+    left_end_index: 269
 
-    right_start_index: 0 
-    right_end_index: 30
+    right_start_index: 240 
+    right_end_index: 259
 
-    center_start_index: 0
-    center_end_index: 30
+    center_start_index: 290
+    center_end_index: 320
+    
+    
+    
+    
