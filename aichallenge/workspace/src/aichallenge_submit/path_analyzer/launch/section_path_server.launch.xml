@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<launch>
+<!-- sec 0~7 まで -->
+  <node pkg="path_analyzer" exec="section_path_server" name="section_server_0" output="screen">
+    <param name="section_id" value="0"/>
+  </node>
+  <node pkg="path_analyzer" exec="section_path_server" name="section_server_1" output="screen">
+    <param name="section_id" value="1"/>
+  </node>
+  <node pkg="path_analyzer" exec="section_path_server" name="section_server_2" output="screen">
+    <param name="section_id" value="2"/>
+  </node>
+  <node pkg="path_analyzer" exec="section_path_server" name="section_server_3" output="screen">
+    <param name="section_id" value="3"/>
+  </node>
+  <node pkg="path_analyzer" exec="section_path_server" name="section_server_4" output="screen">
+    <param name="section_id" value="4"/>
+  </node>
+  <node pkg="path_analyzer" exec="section_path_server" name="section_server_5" output="screen">
+    <param name="section_id" value="5"/>
+  </node>
+  <node pkg="path_analyzer" exec="section_path_server" name="section_server_6" output="screen">
+    <param name="section_id" value="6"/>
+  </node>
+  <node pkg="path_analyzer" exec="section_path_server" name="section_server_7" output="screen">
+    <param name="section_id" value="7"/>
+  </node>
+</launch>
