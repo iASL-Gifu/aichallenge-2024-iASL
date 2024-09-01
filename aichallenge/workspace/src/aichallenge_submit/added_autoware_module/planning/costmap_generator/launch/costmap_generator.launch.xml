@@ -43,7 +43,7 @@
     <param name="grid_position_y" value="0.0"/>
     <param name="maximum_lidar_height_thres" value="0.3"/>
     <param name="minimum_lidar_height_thres" value="-2.2"/>
-    <param name="expand_polygon_size" value="1.0"/>
-    <param name="size_of_expansion_kernel" value="9"/>
+    <param name="expand_polygon_size" value="0.3"/>
+    <param name="size_of_expansion_kernel" value="3"/>
   </node>
 </launch>

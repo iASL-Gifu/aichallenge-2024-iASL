@@ -27,13 +27,13 @@ private:
     if (planning_active_) 
     {
       last_trajectory_ = std::make_shared<autoware_auto_planning_msgs::msg::Trajectory>(*msg);
-      RCLCPP_INFO(this->get_logger(), "Trajectory received and stored.");
+      // RCLCPP_INFO(this->get_logger(), "Trajectory received and stored.");
       // Disable further planning until the trajectory is published
       planning_active_ = false;
     }
     else 
     {
-      RCLCPP_INFO(this->get_logger(), "Planning is inactive. Ignoring received trajectory.");
+      // RCLCPP_INFO(this->get_logger(), "Planning is inactive. Ignoring received trajectory.");
     }
   }
 
@@ -43,18 +43,18 @@ private:
     if (last_trajectory_)
     {
       trajectory_publisher_->publish(*last_trajectory_);
-      RCLCPP_INFO(this->get_logger(), "Stored Trajectory published.");
+      // RCLCPP_INFO(this->get_logger(), "Stored Trajectory published.");
 
       // Reset the stored trajectory after publishing and reactivate planning
       last_trajectory_.reset();
-      RCLCPP_INFO(this->get_logger(), "Trajectory reset after publishing.");
+      // RCLCPP_INFO(this->get_logger(), "Trajectory reset after publishing.");
 
       // Reactivate planning
       planning_active_ = true;
     }
     else
     {
-      RCLCPP_WARN(this->get_logger(), "No Trajectory available to publish.");
+      // RCLCPP_WARN(this->get_logger(), "No Trajectory available to publish.");
     }
   }
 
