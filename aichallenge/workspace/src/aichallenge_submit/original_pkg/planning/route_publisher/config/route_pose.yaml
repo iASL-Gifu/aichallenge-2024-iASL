@@ -1,6 +1,7 @@
 /**:
   ros__parameters:
     
+    # base harf pose
     # harf_pose:
     #   position.x: 89657.3262 #89653.7
     #   position.y: 43176.6794 #43122.5
@@ -10,6 +11,7 @@
     #   orientation.z: -0.90
     #   orientation.w: 0.25
 
+    # my harf pose
     harf_pose:
       position:
         x: 89648.5703125
@@ -20,6 +22,19 @@
         y: 0.0
         z: -0.18118175619550675
         w: 0.9832490337203816
+
+    # harf pose
+    harf_pose:
+      position:
+        x: 89649.11926228822
+        y: 43163.7922466912
+        z: 42.59578151509635
+      orientation:
+        x: 0.01892834935013505
+        y: 0.009221248977484758
+        z: -0.17340654236947914
+        w: 0.9846252369412621
+
 
 
 
@@ -42,4 +57,4 @@
       orientation.z: -0.8788172006607056
       orientation.w: -0.47715866565704346
 
-    target_threthold: 1.0
+    target_threthold: 0.1
