@@ -15,6 +15,8 @@ public:
 
     this->declare_parameter<double>("scale", 2.0);
     this->get_parameter("scale", scale_);
+    this->declare_parameter<double>("scale_of3", 1.0);
+    this->get_parameter("scale_of3", scale_3_);
     // Subscribe to the PredictedObjects topic
     objects_subscription_ = this->create_subscription<autoware_auto_perception_msgs::msg::PredictedObjects>(
       "/perception/object_recognition/objects", 10,
@@ -92,9 +94,17 @@ private:
 
         // Add additional details like shape or classification as needed
         object.shape.type = autoware_auto_perception_msgs::msg::Shape::CYLINDER;
-        object.shape.dimensions.x = last_data_msg_->data[i + 3] * scale_; // Example: diameter -> dimensions
-        object.shape.dimensions.y = last_data_msg_->data[i + 3] * scale_;
-        object.shape.dimensions.z = last_data_msg_->data[i + 3] * scale_;
+        if (i == 3)
+        {
+          object.shape.dimensions.x = last_data_msg_->data[i + 3] * scale_3_; // Example: diameter -> dimensions
+          object.shape.dimensions.y = last_data_msg_->data[i + 3] * scale_3_;
+          object.shape.dimensions.z = last_data_msg_->data[i + 3] * scale_3_;
+        }else{
+          object.shape.dimensions.x = last_data_msg_->data[i + 3] * scale_; // Example: diameter -> dimensions
+          object.shape.dimensions.y = last_data_msg_->data[i + 3] * scale_;
+          object.shape.dimensions.z = last_data_msg_->data[i + 3] * scale_;
+        }
+        
 
         autoware_auto_perception_msgs::msg::ObjectClassification classification;
         classification.label = autoware_auto_perception_msgs::msg::ObjectClassification::UNKNOWN;
@@ -129,6 +139,7 @@ private:
   std_msgs::msg::Float64MultiArray::SharedPtr last_data_msg_;
 
   double scale_ = 2;
+  double scale_3_ ;
 };
 
 int main(int argc, char *argv[])
