@@ -40,6 +40,7 @@ private:
 
     // Client
     std::vector<rclcpp::Client<path_service::srv::GetObstaclePath>::SharedPtr> get_obstacle_path_clients_;
+    bool add_path_;
 
     // Server
     rclcpp::Service<path_service::srv::GetPath>::SharedPtr get_path_srv_;

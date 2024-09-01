@@ -36,6 +36,10 @@
     <param from="$(find-pkg-share obstacle_avoidance)/config/avoidance.param.yaml" />
   </node>
 
+  <node pkg="create_route" exec="create_route" name="create_route" output="screen">
+    <param from="$(find-pkg-share create_route)/config/create.param.yaml" />
+  </node>
+
   <!-- path visualizer -->
   <!-- <node pkg="path_visualizer" exec="path_visualizer" name="path_visualizer" output="screen">
   </node> -->

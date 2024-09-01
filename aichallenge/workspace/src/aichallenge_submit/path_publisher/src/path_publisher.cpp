@@ -7,7 +7,7 @@ namespace path_publisher
 {
 
 PathPublisher::PathPublisher() 
-    : Node("path_publihser"), current_section_(0)
+    : Node("path_publihser"), current_section_(0), add_path_(false)
 {
     RCLCPP_INFO(this->get_logger(), "================ Path Publisher ==================");
 
@@ -84,7 +84,6 @@ PathPublisher::PathPublisher()
 
 void PathPublisher::path_callback(const nav_msgs::msg::Path::SharedPtr msg) {
     // RCLCPP_INFO(this->get_logger(), "===== Subscribe Obstacle Path =====");
-    path_ = *msg;
     nav_msgs::msg::Path new_path;
     new_path.poses.clear();
     new_path.header.stamp = this->now();
@@ -107,6 +106,11 @@ void PathPublisher::path_callback(const nav_msgs::msg::Path::SharedPtr msg) {
     }
 
     new_path.poses.assign(msg->poses.begin() + index, msg->poses.end());
+
+    if (add_path_) {
+        new_path.poses.insert(new_path.poses.end(), path_.poses.begin(), path_.poses.end());
+        add_path_ = false;
+    }
 
     path_pub_->publish(new_path);
 
@@ -144,12 +148,14 @@ void PathPublisher::object_callback(const std_msgs::msg::Float64MultiArray::Shar
 
     auto response_callback = [this](ServiceResponseFuture future) {
         auto result = future.get();
-        nav_msgs::msg::Path obstacle_path = result->path;
-        path_.poses.insert(path_.poses.end(), obstacle_path.poses.begin(), obstacle_path.poses.end());
+        path_ = result->path;
+        add_path_ = true;
+        RCLCPP_INFO(this->get_logger(), "Client Path size: %zu", path_.poses.size());
     };
     get_obstacle_path_clients_[current_section_]->async_send_request(request, response_callback);
 
     RCLCPP_INFO(this->get_logger(), "Path Publisher Client");
+    RCLCPP_INFO(this->get_logger(), "Server Object x: %f, y: %f", object_x, object_y);
 
     objects_coordinate_[current_section_].first = object_x;
     objects_coordinate_[current_section_].second = object_y;
