@@ -7,6 +7,7 @@
 #include "autoware_auto_planning_msgs/msg/path_with_lane_id.hpp"
 #include "nav_msgs/msg/path.hpp"
 #include "geometry_msgs/msg/pose_stamped.hpp"
+#include "path_service/srv/get_path.hpp"
 
 
 namespace obstacle_avoidance
@@ -22,89 +23,64 @@ public:
     ObstacleAvoidance();
 
 private:
-    rclcpp::Subscription<nav_msgs::msg::OccupancyGrid>::SharedPtr costmap_sub_;
-    rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr odometry_sub_;
-
-    // TODO: laneletを使用したpath
-    // rclcpp::Subscription<PathWithLaneId>::SharedPtr path_sub_;
-
-    rclcpp::Subscription<nav_msgs::msg::Path>::SharedPtr path_sub_;
-
-    // TODO: laneletを使用したpath
-    // rclcpp::Publisher<PathWithLaneId>::SharedPtr avoidance_path_pub_;
-
+    // Publisher
     rclcpp::Publisher<nav_msgs::msg::Path>::SharedPtr avoidance_path_pub_;
 
     rclcpp::Publisher<nav_msgs::msg::OccupancyGrid>::SharedPtr costmap_2d_pub_;
 
+    // Subscription
+    rclcpp::Subscription<nav_msgs::msg::OccupancyGrid>::SharedPtr costmap_sub_;
     void costmap_callback(const nav_msgs::msg::OccupancyGrid::SharedPtr msg);
-    void odometry_callback(const nav_msgs::msg::Odometry::SharedPtr msg);
+    nav_msgs::msg::OccupancyGrid costmap_;
+    double width_, height_, resolution_, origin_x_, origin_y_;
+    bool costmap_received_;
 
-    // TODO: laneletを使用したpath
-    // void path_callback(const PathWithLaneId::SharedPtr msg);
-
+    rclcpp::Subscription<nav_msgs::msg::Path>::SharedPtr path_sub_;
     void path_callback(nav_msgs::msg::Path::SharedPtr msg);
+    nav_msgs::msg::Path path_;
+    bool path_received_;
 
-    double compute_attractive_potential(double x, double y, double gx, double gy);
+    rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr odometry_sub_;
+    void odometry_callback(const nav_msgs::msg::Odometry::SharedPtr msg);
+    nav_msgs::msg::Odometry odometry_;
 
-    // TODO: 消す
-    // double compute_repulsive_potential(
-    //     double x, double y, const std::vector<double>& ox, const std::vector<double>& oy
-    // );
-    void euler_to_quaternion(double phi, double theta, double psi, std::vector<double>& result);
+    // Client
+    rclcpp::Client<path_service::srv::GetPath>::SharedPtr get_path_client_;
+    void send_path_request();
+    rclcpp::TimerBase::SharedPtr path_timer_;
+    nav_msgs::msg::Path centerline_path_;
+    bool get_path_centerline_;
 
-    double compute_repulsive_potential(double x, double y, double angle_rad);
-    std::pair<int, int> rotatePoint(double x, double y, double theta, double center_x, double center_y);
+    // Server
 
-    // TODO
-    double threshold_;
-    double attract_;
-    double repulse_;
+    // param
+    double attract_, repulse_;
+    double forward_dist_, side_dist_;
 
-    // TODO
-    double penalty_dist_;
     double desired_dist_;
     int start_index_;
     int num_change_points_;
     double lookahead_dist_;
-    double angle_interval_;
-    double max_angle_;
-    double min_angle_;
 
-    // TODO
+    double angle_interval_;
+    double max_angle_, min_angle_;
     double near_point_dist_;
     int margin_;
-    double forward_dist_;
-    double side_dist_;
+
     bool visual_;
-    double visual_angle_;
 
-    double min_, max_;
-
-    nav_msgs::msg::OccupancyGrid costmap_;
-    double width_, height_, resolution_, origin_x_, origin_y_;
-    nav_msgs::msg::Odometry odometry_;
-
-    // TODO: laneletを使用したpath
-    // PathWithLaneId path_;
-
-    nav_msgs::msg::Path path_;
-
-    bool costmap_received_, path_received_;
-    std::vector<double> angles;
-
-    // TODO: laneletを使用したpath
-    // std::vector<PathPointWithLaneId> generate_paths_;
-
-    std::vector<geometry_msgs::msg::PoseStamped> generate_paths_;
-
-    int counter_;
-
-
-
-
-    float ex_x_, ex_y_;
+    // fuction
     bool are_positions_equal();
+    double compute_attractive_potential(double x, double y, double gx, double gy);
+    double compute_repulsive_potential(double x, double y, double angle_rad);
+    std::pair<int, int> rotatePoint(double x, double y, double theta, double center_x, double center_y);
+    void euler_to_quaternion(double phi, double theta, double psi, std::vector<double>& result);
+
+    // variable
+    float ex_x_, ex_y_;
+    std::vector<geometry_msgs::msg::PoseStamped> generate_paths_;
+    std::vector<double> angles;
+    bool first_publish_;
 };
 
 }
