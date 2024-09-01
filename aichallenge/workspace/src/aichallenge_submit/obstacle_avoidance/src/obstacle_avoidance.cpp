@@ -110,7 +110,7 @@ void ObstacleAvoidance::costmap_callback(const nav_msgs::msg::OccupancyGrid::Sha
 }
 
 void ObstacleAvoidance::path_callback(const nav_msgs::msg::Path::SharedPtr msg) {
-    RCLCPP_INFO(this->get_logger(), "yyyyyyyyyyyyyyyyyyyyyyyyyy");
+    // RCLCPP_INFO(this->get_logger(), "yyyyyyyyyyyyyyyyyyyyyyyyyy");
     path_ = *msg;
 }
 
@@ -250,7 +250,7 @@ void ObstacleAvoidance::odometry_callback(const nav_msgs::msg::Odometry::SharedP
         count_c++;
     }
 
-    RCLCPP_INFO(this->get_logger(), "zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz");
+    // RCLCPP_INFO(this->get_logger(), "zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz");
     avoidance_path_pub_->publish(new_path);
     first_publish_ = true;
 }

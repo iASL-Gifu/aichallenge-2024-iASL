@@ -27,6 +27,7 @@ private:
     // Subscription
     rclcpp::Subscription<nav_msgs::msg::Path>::SharedPtr path_sub_;
     void path_callback(const nav_msgs::msg::Path::SharedPtr msg);
+    nav_msgs::msg::Path path_;
     std::vector<std::pair<double, double>> objects_coordinate_;
     int current_section_;
 

@@ -69,11 +69,11 @@ PathPublisher::PathPublisher()
         std::bind(&PathPublisher::handle_get_path, this, std::placeholders::_1, std::placeholders::_2)
     );
 
-    // for (int section = 0; section < 8; section++) {
-    //     std::string service_name = "/obstacle_path_" + std::to_string(section);
-    //     auto client = this->create_client<path_service::srv::GetObstaclePath>(service_name);
-    //     get_obstacle_path_clients_.push_back(client);
-    // }
+    for (int section = 0; section < 8; section++) {
+        std::string service_name = "/obstacle_path_" + std::to_string(section);
+        auto client = this->create_client<path_service::srv::GetObstaclePath>(service_name);
+        get_obstacle_path_clients_.push_back(client);
+    }
 
     load_csv(centerline_csv_path_, centerline_downsample_rate_, centerline_points_);
     load_csv(raceline_csv_path_, raceline_downsample_rate_, raceline_points_);
@@ -83,7 +83,8 @@ PathPublisher::PathPublisher()
 }
 
 void PathPublisher::path_callback(const nav_msgs::msg::Path::SharedPtr msg) {
-    RCLCPP_INFO(this->get_logger(), "===== Subscribe Obstacle Path =====");
+    // RCLCPP_INFO(this->get_logger(), "===== Subscribe Obstacle Path =====");
+    path_ = *msg;
     nav_msgs::msg::Path new_path;
     new_path.poses.clear();
     new_path.header.stamp = this->now();
@@ -135,18 +136,20 @@ void PathPublisher::object_callback(const std_msgs::msg::Float64MultiArray::Shar
 
     RCLCPP_INFO(this->get_logger(), "Path Publisher Object Index %d", current_section_);
 
-    // auto request = std::make_shared<path_service::srv::GetObstaclePath::Request>();
-    // request.x = object_x;
-    // request.y = object_y;
+    auto request = std::make_shared<path_service::srv::GetObstaclePath::Request>();
+    request->x = object_x;
+    request->y = object_y;
 
-    // using ServiceResponseFuture = rclcpp::Client<path_service::srv::GetObstaclePath>::SharedFuture;
+    using ServiceResponseFuture = rclcpp::Client<path_service::srv::GetObstaclePath>::SharedFuture;
 
-    // auto response_callback = [this](ServiceResponseFuture future) {
-    //     auto result = future.get();
-    //     nav_msgs::msg::Path obstacle_path = result->path;
-    // }
+    auto response_callback = [this](ServiceResponseFuture future) {
+        auto result = future.get();
+        nav_msgs::msg::Path obstacle_path = result->path;
+        path_.poses.insert(path_.poses.end(), obstacle_path.poses.begin(), obstacle_path.poses.end());
+    };
+    get_obstacle_path_clients_[current_section_]->async_send_request(request, response_callback);
 
-    // get_obstacle_path_clients_[current_section_]->async_send_request(request, response_callback);
+    RCLCPP_INFO(this->get_logger(), "Path Publisher Client");
 
     objects_coordinate_[current_section_].first = object_x;
     objects_coordinate_[current_section_].second = object_y;
