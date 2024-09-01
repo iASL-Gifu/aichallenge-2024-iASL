@@ -41,10 +41,10 @@
     <param name="section_count" value="0" />
   </node>
 
-  <node pkg="create_route" exec="create_route" name="create_route_1" output="screen">
+  <!-- <node pkg="create_route" exec="create_route" name="create_route_1" output="screen">
     <param from="$(find-pkg-share create_route)/config/create.param.yaml" />
     <param name="section_count" value="1" />
-  </node>
+  </node> -->
 
   <!-- path visualizer -->
   <!-- <node pkg="path_visualizer" exec="path_visualizer" name="path_visualizer" output="screen">

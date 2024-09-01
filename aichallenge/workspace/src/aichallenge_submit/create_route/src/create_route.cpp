@@ -64,6 +64,8 @@ Create_route::Create_route() : Node("create_route"), get_path_(false), get_cente
 
     marker_path_pub_ = this->create_publisher<nav_msgs::msg::Path>("create_route", 1);
 
+    marker_array_pub_ = this->create_publisher<visualization_msgs::msg::MarkerArray>("visualization_marker_array", 10);
+
     get_obstacle_path_srv_ = this->create_service<path_service::srv::GetObstaclePath>(
         "/obstacle_path_0", 
         std::bind(&Create_route::handle_get_obstacle_path, this, std::placeholders::_1, std::placeholders::_2)
@@ -91,6 +93,11 @@ Create_route::Create_route() : Node("create_route"), get_path_(false), get_cente
 
             load_csv(left_csv_path_, 1, left_path_);
             load_csv(right_csv_path_, 1, right_path_);
+
+            marker_timer_ = this->create_wall_timer(
+                std::chrono::seconds(1),  // 1秒ごとに実行
+                std::bind(&Create_route::publish_path_markers, this)
+            );
 
             // タイマーをキャンセルして再実行を防止
             this->delayed_timer_->cancel();
@@ -387,6 +394,158 @@ void Create_route::load_csv(std::string csv_path, int downsample_rate, std::vect
     }
 
     RCLCPP_INFO(this->get_logger(), "Loaded %zu points", point.size());
+}
+
+void Create_route::publish_path_markers() {
+
+    if (left_path_.empty() || right_path_.empty() || center_path_.poses.empty()) {
+        RCLCPP_WARN(this->get_logger(), "One or more paths are empty. Skipping marker publishing.");
+        return;  // パスが存在しない場合は何もしない
+    }
+
+    visualization_msgs::msg::MarkerArray marker_array;
+
+    visualization_msgs::msg::Marker marker = visualization_msgs::msg::Marker();
+    marker.header.frame_id = "map";
+    marker.header.stamp = this->get_clock()->now();
+    marker.ns = "left_start";
+    marker.id = 0;
+    marker.type = visualization_msgs::msg::Marker::SPHERE;
+    marker.action = visualization_msgs::msg::Marker::ADD;
+
+    marker.pose.position.x = left_path_[left_start_index_].pose.position.x;
+    marker.pose.position.y = left_path_[left_start_index_].pose.position.y;
+    marker.pose.position.z = left_path_[left_start_index_].pose.position.z;
+
+    marker.scale.x = 1.0;
+    marker.scale.y = 1.0;
+    marker.scale.z = 1.0;
+
+    marker.color.r = 1.0;
+    marker.color.g = 0.0;
+    marker.color.b = 0.0;
+    marker.color.a = 1.0;
+
+    marker_array.markers.push_back(marker);
+
+    marker = visualization_msgs::msg::Marker();
+    marker.header.frame_id = "map";
+    marker.header.stamp = this->get_clock()->now();
+    marker.ns = "left_end";
+    marker.id = 1;
+    marker.type = visualization_msgs::msg::Marker::SPHERE;
+    marker.action = visualization_msgs::msg::Marker::ADD;
+
+    marker.pose.position.x = left_path_[left_end_index_].pose.position.x;
+    marker.pose.position.y = left_path_[left_end_index_].pose.position.y;
+    marker.pose.position.z = left_path_[left_end_index_].pose.position.z;
+
+    marker.scale.x = 1.0;
+    marker.scale.y = 1.0;
+    marker.scale.z = 1.0;
+
+    marker.color.r = 1.0;
+    marker.color.g = 0.0;
+    marker.color.b = 0.0;
+    marker.color.a = 1.0;
+
+    marker_array.markers.push_back(marker);
+
+    marker = visualization_msgs::msg::Marker();
+    marker.header.frame_id = "map";
+    marker.header.stamp = this->get_clock()->now();
+    marker.ns = "right_start";
+    marker.id = 2;
+    marker.type = visualization_msgs::msg::Marker::SPHERE;
+    marker.action = visualization_msgs::msg::Marker::ADD;
+
+    marker.pose.position.x = right_path_[right_start_index_].pose.position.x;
+    marker.pose.position.y = right_path_[right_start_index_].pose.position.y;
+    marker.pose.position.z = right_path_[right_start_index_].pose.position.z;
+
+    marker.scale.x = 1.0;
+    marker.scale.y = 1.0;
+    marker.scale.z = 1.0;
+
+    marker.color.r = 0.0;
+    marker.color.g = 1.0;
+    marker.color.b = 0.0;
+    marker.color.a = 1.0;
+
+    marker_array.markers.push_back(marker);
+
+    marker = visualization_msgs::msg::Marker();
+    marker.header.frame_id = "map";
+    marker.header.stamp = this->get_clock()->now();
+    marker.ns = "right_end";
+    marker.id = 3;
+    marker.type = visualization_msgs::msg::Marker::SPHERE;
+    marker.action = visualization_msgs::msg::Marker::ADD;
+
+    marker.pose.position.x = right_path_[right_end_index_].pose.position.x;
+    marker.pose.position.y = right_path_[right_end_index_].pose.position.y;
+    marker.pose.position.z = right_path_[right_end_index_].pose.position.z;
+
+    marker.scale.x = 1.0;
+    marker.scale.y = 1.0;
+    marker.scale.z = 1.0;
+
+    marker.color.r = 0.0;
+    marker.color.g = 1.0;
+    marker.color.b = 0.0;
+    marker.color.a = 1.0;
+
+    marker_array.markers.push_back(marker);
+
+    marker = visualization_msgs::msg::Marker();
+    marker.header.frame_id = "map";
+    marker.header.stamp = this->get_clock()->now();
+    marker.ns = "center_start";
+    marker.id = 4;
+    marker.type = visualization_msgs::msg::Marker::SPHERE;
+    marker.action = visualization_msgs::msg::Marker::ADD;
+
+    marker.pose.position.x = center_path_.poses[center_start_index_].pose.position.x;
+    marker.pose.position.y = center_path_.poses[center_start_index_].pose.position.y;
+    marker.pose.position.z = center_path_.poses[center_start_index_].pose.position.z;
+
+    marker.scale.x = 1.0;
+    marker.scale.y = 1.0;
+    marker.scale.z = 1.0;
+
+    marker.color.r = 0.0;
+    marker.color.g = 0.0;
+    marker.color.b = 1.0;
+    marker.color.a = 1.0;
+
+    marker_array.markers.push_back(marker);
+
+    marker = visualization_msgs::msg::Marker();
+    marker.header.frame_id = "map";
+    marker.header.stamp = this->get_clock()->now();
+    marker.ns = "center_end";
+    marker.id = 5;
+    marker.type = visualization_msgs::msg::Marker::SPHERE;
+    marker.action = visualization_msgs::msg::Marker::ADD;
+
+    marker.pose.position.x = center_path_.poses[center_end_index_].pose.position.x;
+    marker.pose.position.y = center_path_.poses[center_end_index_].pose.position.y;
+    marker.pose.position.z = center_path_.poses[center_end_index_].pose.position.z;
+
+    marker.scale.x = 1.0;
+    marker.scale.y = 1.0;
+    marker.scale.z = 1.0;
+
+    marker.color.r = 0.0;
+    marker.color.g = 0.0;
+    marker.color.b = 1.0;
+    marker.color.a = 1.0;
+
+    marker_array.markers.push_back(marker);
+
+    marker_array_pub_->publish(marker_array);
+
+    RCLCPP_INFO(this->get_logger(), "uuuuuuuuuuuuuuuuuuuuuuuuuu");
 }
 
 }

@@ -10,6 +10,8 @@
 #include "path_service/srv/get_path.hpp"
 #include "path_service/srv/get_obstacle_path.hpp"
 #include "std_msgs/msg/float64_multi_array.hpp"
+#include "visualization_msgs/msg/marker.hpp"
+#include "visualization_msgs/msg/marker_array.hpp"
 
 
 namespace create_route
@@ -27,7 +29,8 @@ public:
 private:
     // Publish
     rclcpp::Publisher<nav_msgs::msg::Path>::SharedPtr marker_path_pub_;
-    
+    rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr marker_array_pub_;
+    rclcpp::TimerBase::SharedPtr marker_timer_;
 
     // Subscription
     rclcpp::Subscription<nav_msgs::msg::OccupancyGrid>::SharedPtr costmap_sub_;
@@ -60,12 +63,16 @@ private:
     double margin_radius_;
     double angle_interval_;
     double collision_checker_;
+    double left_start_index_, left_end_index_;
+    double right_start_index_, right_end_index_;
+    double center_start_index_, center_end_index_;
 
     // function
     int find_nearest_point_index(double x,double y);
     std::vector<int> get_indices(int index, int start, int end);
     void euler_to_quaternion(double phi, double theta, double psi, std::vector<double>& result);
     void load_csv(std::string csv_path, int downsample_rate, std::vector<geometry_msgs::msg::PoseStamped>& point);
+    void publish_path_markers();
 
     // variable
     // first: 進む距離, second: 角度
