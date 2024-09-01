@@ -7,15 +7,21 @@ namespace path_publisher
 {
 
 PathPublisher::PathPublisher() 
-    : Node("path_publihser"), csv_loaded_(false), path_initialized_(false), odometry_received_(false)
+    : Node("path_publihser"), path_initialized_(false), current_section_(-1), prev_x_(0.0), prev_y_(0.0)
 {
     RCLCPP_INFO(this->get_logger(), "================ Path Publisher ==================");
 
-    this->declare_parameter("csv_path", std::string("csv_path"));
-    csv_path_ = this->get_parameter("csv_path").as_string();
+    this->declare_parameter("raceline_csv_path", std::string("raceline_csv_path"));
+    raceline_csv_path_ = this->get_parameter("raceline_csv_path").as_string();
 
-    this->declare_parameter("downsample_rate", 10);
-    downsample_rate_ = this->get_parameter("downsample_rate").as_int();
+    this->declare_parameter("centerline_csv_path", std::string("centerline_csv_path"));
+    centerline_csv_path_ = this->get_parameter("centerline_csv_path").as_string();
+
+    this->declare_parameter("raceline_downsample_rate", 10);
+    raceline_downsample_rate_ = this->get_parameter("raceline_downsample_rate").as_int();
+
+    this->declare_parameter("centerline_downsample_rate", 10);
+    centerline_downsample_rate_ = this->get_parameter("centerline_downsample_rate").as_int();
 
     this->declare_parameter("loop_count", 10);
     loop_count_ = this->get_parameter("loop_count").as_int();
@@ -26,11 +32,9 @@ PathPublisher::PathPublisher()
     this->declare_parameter("margin", 10);
     margin_ = this->get_parameter("margin").as_int();
 
-    if (csv_path_.empty()) {
-        RCLCPP_INFO(this->get_logger(), "csv_path is not set");
-    }
-    RCLCPP_INFO(this->get_logger(), "csv_path: %s", csv_path_.c_str());
-    RCLCPP_INFO(this->get_logger(), "downsaple_rate: %d", downsample_rate_);
+    RCLCPP_INFO(this->get_logger(), "csv_path: %s", raceline_csv_path_.c_str());
+    RCLCPP_INFO(this->get_logger(), "csv_path: %s", centerline_csv_path_.c_str());
+    RCLCPP_INFO(this->get_logger(), "downsample_rate: %d", centerline_downsample_rate_);
     RCLCPP_INFO(this->get_logger(), "loop_count: %d", loop_count_);
     RCLCPP_INFO(this->get_logger(), "publish_rate: %d", publish_rate_);
     RCLCPP_INFO(this->get_logger(), "margin: %d", margin_);
@@ -45,10 +49,30 @@ PathPublisher::PathPublisher()
         "obstacle_avoidance", 1, std::bind(&PathPublisher::path_callback, this, std::placeholders::_1)
     );
 
-    
-    RCLCPP_INFO(this->get_logger(), "--------------- Load CSV ---------------");
+    obstacle_sub_ = this->create_subscription<std_msgs::msg::Float64MultiArray>(
+        "/aichallenge/objects", 1, 
+        std::bind(&PathPublisher::object_callback, this, std::placeholders::_1)
+    );
 
-    std::ifstream file(csv_path_);
+    get_path_srv_ = this->create_service<path_service::srv::GetPath>(
+        "get_path", 
+        std::bind(&PathPublisher::handle_get_path, this, std::placeholders::_1, std::placeholders::_2)
+    );
+
+    // for (int section = 0; section < 8; section++) {
+    //     std::string service_name = "/obstacle_path/" + std::to_string(section);
+    //     auto client = this->create_client<path_service::srv::GetObstaclePath>(service_name);
+    //     get_obstacle_path_clients_.push_back(client);
+    // }
+
+    load_csv(raceline_csv_path_, raceline_downsample_rate_, raceline_points_);
+    load_csv(centerline_csv_path_, centerline_downsample_rate_, centerline_points_);
+}
+
+void PathPublisher::load_csv(std::string csv_path, int downsample_rate, std::vector<geometry_msgs::msg::PoseStamped>& point) {
+    RCLCPP_INFO(this->get_logger(), "--------------- Load CSV %s ---------------", csv_path.c_str());
+
+    std::ifstream file(csv_path);
     std::string line;
     line_count_ = 0;
     if (!file.is_open()) {
@@ -60,7 +84,7 @@ PathPublisher::PathPublisher()
         {
             line_count_++;
             
-            if (line_count_ % downsample_rate_ != 0)
+            if (line_count_ % downsample_rate != 0)
             {
                 continue;
             }
@@ -87,22 +111,17 @@ PathPublisher::PathPublisher()
             pose.header.frame_id = "map";
             pose.header.stamp = this->now();
 
-            points_.push_back(pose);
+            point.push_back(pose);
         }
         file.close();
     }
 
-    RCLCPP_INFO(this->get_logger(), "Loaded %d points", line_count_);
-
-    // timer_ = this->create_wall_timer(
-    //     std::chrono::milliseconds(publish_rate_),
-    //     std::bind(&PathPublisher::on_timer, this));
+    RCLCPP_INFO(this->get_logger(), "Loaded %zu points", point.size());
 }
 
 void PathPublisher::odometry_callback(const nav_msgs::msg::Odometry::SharedPtr msg) {
     // RCLCPP_INFO(this->get_logger(), "x_x_x_x_x_x_x_x_x_x_x_x_x_x_x");
     odometry_ = *msg;
-    odometry_received_ = true;
 
     if (path_initialized_) return;
 
@@ -111,10 +130,10 @@ void PathPublisher::odometry_callback(const nav_msgs::msg::Odometry::SharedPtr m
 
     double min_start_dist = std::numeric_limits<double>::infinity();
     int min_start_index = 0;
-    for (int i = 0; i < points_.size(); i++) {
+    for (int i = 0; i < raceline_points_.size(); i++) {
         double dist = std::sqrt(
-            std::pow(points_[i].pose.position.x - start_x, 2) +
-            std::pow(points_[i].pose.position.y - start_y, 2)
+            std::pow(raceline_points_[i].pose.position.x - start_x, 2) +
+            std::pow(raceline_points_[i].pose.position.y - start_y, 2)
         );
 
         if (dist < min_start_dist) {
@@ -123,22 +142,22 @@ void PathPublisher::odometry_callback(const nav_msgs::msg::Odometry::SharedPtr m
         }
     }
     RCLCPP_INFO(this->get_logger(), "Closest waypoint to start is %d", min_start_index);
+    RCLCPP_INFO(this->get_logger(), "x: %f, y: %f", raceline_points_[min_start_index].pose.position.x, raceline_points_[min_start_index].pose.position.x);
 
     // min_start_indexが先頭になるpathを生成
     std::vector<geometry_msgs::msg::PoseStamped> new_points;
-    for (int i = min_start_index; i < points_.size(); i++) {
-        new_points.push_back(points_[i]);
+    for (int i = min_start_index; i < raceline_points_.size(); i++) {
+        new_points.push_back(raceline_points_[i]);
     }
     for (int i = 0; i < min_start_index; i++) {
-        new_points.push_back(points_[i]);
+        new_points.push_back(raceline_points_[i]);
     }
 
-    // loop the points
-    points_.clear();
+    std::vector<geometry_msgs::msg::PoseStamped> points;
 
     for (int i = 0; i < loop_count_; i++) {
         for (int j = 0; j < new_points.size(); j++) {
-            points_.push_back(new_points[j]);
+            points.push_back(new_points[j]);
         }
     }
 
@@ -149,9 +168,42 @@ void PathPublisher::odometry_callback(const nav_msgs::msg::Odometry::SharedPtr m
     path.poses.clear();
     path.header.stamp = this->now();
     path.header.frame_id = "map";
-    path.poses = points_;
+    path.poses = points;
 
     path_pub_->publish(path);
+}
+
+void PathPublisher::object_callback(const std_msgs::msg::Float64MultiArray::SharedPtr msg) {
+    std::vector<double> data = msg->data;
+
+    int last_index = data.size() - 4;
+    if (last_index < 0) return;
+
+    double object_x = data[last_index + 0];
+    double object_y = data[last_index + 1];
+
+    RCLCPP_INFO(this->get_logger(), "object_x: %f, object_y: %f", object_x, object_y);
+
+    if (prev_x_ == object_x && prev_y_ == object_y) return;
+
+    // auto request = std::make_shared<path_service::srv::GetObstaclePath::Request>();
+    // request.x = object_x;
+    // request.y = object_y;
+
+    // using ServiceResponseFuture = rclcpp::Client<path_service::srv::GetObstaclePath>::SharedFuture;
+
+    // auto response_callback = [this](ServiceResponseFuture future) {
+    //     auto result = future.get();
+    //     nav_msgs::msg::Path obstacle_path = result->path;
+    // }
+
+    // get_obstacle_path_clients_[current_section_]->async_send_request(request, response_callback);
+
+    current_section_ = (current_section_ + 1) % 8;
+    prev_x_ = object_x;
+    prev_y_ = object_y;
+
+    RCLCPP_INFO(this->get_logger(), "yyyyyyyyyyyyyy %d", current_section_);
 }
 
 void PathPublisher::path_callback(const nav_msgs::msg::Path::SharedPtr msg) {
@@ -187,6 +239,25 @@ void PathPublisher::path_callback(const nav_msgs::msg::Path::SharedPtr msg) {
     // RCLCPP_INFO(this->get_logger(), "Index 0 Position: x: %f, y: %f", new_path.poses[0].pose.position.x, new_path.poses[0].pose.position.y);
 
     path_pub_->publish(new_path);
+}
+
+void PathPublisher::handle_get_path(const std::shared_ptr<path_service::srv::GetPath::Request> request,
+                                    std::shared_ptr<path_service::srv::GetPath::Response> response)
+{
+    std::string csv_path = request->csv_path;
+    nav_msgs::msg::Path path;
+
+    if (csv_path == "centerline") {
+        path.poses = centerline_points_;
+    } else if (csv_path == "raceline") {
+        path.poses = raceline_points_;
+    }
+
+    path.header.stamp = this->now();
+    path.header.frame_id = "map";
+
+    response->path = path;
+    RCLCPP_INFO(this->get_logger(), "Path sent to client with %ld points.", path.poses.size());
 }
 
 }

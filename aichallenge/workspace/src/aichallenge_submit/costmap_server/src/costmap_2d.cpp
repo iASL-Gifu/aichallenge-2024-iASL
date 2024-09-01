@@ -2,11 +2,13 @@
 #include <cmath>
 #include <iomanip>  // std::setprecisionのために必要
 #include <fstream>  // ofstreamのために必要
+#include "tf2/utils.h"
+#include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
 
 namespace costmap_server
 {
 
-CostMap2D::CostMap2D() : Node("costmap_2d"), get_map_(false)
+CostMap2D::CostMap2D() : Node("costmap_2d"), get_map_(false), get_path_centerline_(false), get_path_raceline_(false)
 {
     RCLCPP_INFO(this->get_logger(), "================== Cost Map =======================");
 
@@ -57,19 +59,34 @@ CostMap2D::CostMap2D() : Node("costmap_2d"), get_map_(false)
 
     get_map_client_ = this->create_client<nav_msgs::srv::GetMap>("/ogm/map_server/map");
 
+    get_path_client_ = this->create_client<path_service::srv::GetPath>("/get_path");
+
     // サービスが利用できるまで待機
     while (!get_map_client_->wait_for_service(std::chrono::seconds(1))) {
         if (!rclcpp::ok()) {
-            RCLCPP_ERROR(this->get_logger(), "client interrupted while waiting for service to appear.");
+            RCLCPP_ERROR(this->get_logger(), "map client interrupted while waiting for service to appear.");
             return;
         }
-        RCLCPP_INFO(this->get_logger(), "waiting for service to appear...");
+        RCLCPP_INFO(this->get_logger(), "waiting for map service to appear...");
     }
 
     // タイマーを使ってリクエストを定期的に送信
-    timer_ = this->create_wall_timer(
+    map_timer_ = this->create_wall_timer(
         std::chrono::seconds(1),
         std::bind(&CostMap2D::send_map_request, this)
+    );
+
+    while (!get_path_client_->wait_for_service(std::chrono::seconds(1))) {
+        if (!rclcpp::ok()) {
+            RCLCPP_ERROR(this->get_logger(), "path client interrupted while waiting for service to appear.");
+            return;
+        }
+        RCLCPP_INFO(this->get_logger(), "waiting for path service to appear...");
+    }
+
+    path_timer_ = this->create_wall_timer(
+        std::chrono::seconds(1),
+        std::bind(&CostMap2D::send_path_request, this)
     );
 
 }
@@ -78,7 +95,7 @@ void CostMap2D::send_map_request()
 {
     if (get_map_) {
         // マップが取得できたらタイマーを止める
-        timer_->cancel();
+        map_timer_->cancel();
         return;
     }
 
@@ -103,6 +120,84 @@ void CostMap2D::send_map_request()
     };
 
     auto future_result = get_map_client_->async_send_request(request, response_received_callback);
+}
+
+void CostMap2D::send_path_request()
+{
+    if (get_path_centerline_ && get_path_raceline_) {
+        // 両方のパスが取得できたらタイマーを止める
+        path_timer_->cancel();
+        return;
+    }
+
+    // centerlineのリクエストを作成
+    auto request_centerline = std::make_shared<path_service::srv::GetPath::Request>();
+    request_centerline->csv_path = "centerline";
+
+    // racelineのリクエストを作成
+    auto request_raceline = std::make_shared<path_service::srv::GetPath::Request>();
+    request_raceline->csv_path = "raceline";
+
+    auto request_left = std::make_shared<path_service::srv::GetPath::Request>();
+    request_left->csv_path = "left";
+
+    using ServiceResponseFuture = rclcpp::Client<path_service::srv::GetPath>::SharedFuture;
+
+    // centerlineのレスポンス処理
+    auto response_centerline_callback = [this](ServiceResponseFuture future) {
+        auto result = future.get();
+        centerline_path_ = result->path;
+
+        if (centerline_path_.poses.size() > 0) {
+            get_path_centerline_ = true;
+            RCLCPP_INFO(this->get_logger(), "zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz");
+            RCLCPP_INFO(this->get_logger(), "Path centerline received with %ld points", centerline_path_.poses.size());
+        }
+
+        // 両方のパスが取得できたらタイマーを止める
+        if (get_path_centerline_ && get_path_raceline_) {
+            path_timer_->cancel();
+        }
+    };
+
+    // racelineのレスポンス処理
+    auto response_raceline_callback = [this](ServiceResponseFuture future) {
+        auto result = future.get();
+        raceline_path_ = result->path;
+
+        if (raceline_path_.poses.size() > 0) {
+            get_path_raceline_ = true;
+            RCLCPP_INFO(this->get_logger(), "yyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy");
+            RCLCPP_INFO(this->get_logger(), "Path raceline received with %ld points", raceline_path_.poses.size());
+        }
+
+        // 両方のパスが取得できたらタイマーを止める
+        if (get_path_centerline_ && get_path_raceline_) {
+            path_timer_->cancel();
+        }
+    };
+
+    // 非同期リクエスト送信
+    get_path_client_->async_send_request(request_centerline, response_centerline_callback);
+    get_path_client_->async_send_request(request_raceline, response_raceline_callback);
+}
+
+
+std::pair<int, int> CostMap2D::rotatePoint(double x, double y, double theta, double center_x, double center_y)
+{
+    // 座標を中心からの相対位置に変換
+    double rel_x = x - center_x;
+    double rel_y = y - center_y;
+
+    // 相対位置で回転を適用
+    double x_new = rel_x * std::cos(theta) - rel_y * std::sin(theta);
+    double y_new = rel_x * std::sin(theta) + rel_y * std::cos(theta);
+
+    // 元の位置に戻す
+    x_new += center_x;
+    y_new += center_y;
+
+    return std::make_pair(std::floor(x_new), std::floor(y_new));
 }
 
 std::tuple<int, int, int, int> CostMap2D::calculateIndex(
@@ -138,8 +233,6 @@ void CostMap2D::object_callback(const std_msgs::msg::Float64MultiArray::SharedPt
 
         int x_index = center_x / resolution_;
         int y_index = center_y / resolution_;
-
-        auto [x_start, x_end, y_start, y_end] = calculateIndex(center_x, center_y, object_inside_radius_);
 
         int index = y_index * width_ + x_index;
         array[index] = object_inside_cost_;
@@ -208,23 +301,82 @@ void CostMap2D::calculateInflation(
 {
     auto center_x = map_x * resolution_;
     auto center_y = map_y * resolution_;
-    auto [x_start, x_end, y_start, y_end] = calculateIndex(center_x, center_y, object_inflation_radius_);
+    int x_start = std::floor((center_x - object_short_side_) / resolution_); 
+    int x_end = std::floor((center_x + object_short_side_) / resolution_); 
+    int y_start = std::floor((center_y - object_long_side_) / resolution_); 
+    int y_end = std::floor((center_y + object_long_side_) / resolution_); 
+
+    if (x_start <= 0) x_start = 0;
+    if (y_start <= 0) y_start = 0;
+    if (x_end >= width_) x_end = width_ - 1;
+    if (y_end >= height_) y_end = height_ - 1;
+
+    double min_dist = std::numeric_limits<double>::infinity();
+    int index = 0;
+    for (int i = 0; i < centerline_path_.poses.size(); i++) {
+        double dist = std::sqrt(
+            std::pow(centerline_path_.poses[i].pose.position.x - (center_x + origin_x_), 2) +
+            std::pow(centerline_path_.poses[i].pose.position.y - (center_y + origin_y_), 2)
+        );
+
+        if (dist < min_dist) {
+            min_dist = dist;
+            index = i;
+        }
+    }
+
+    // double normal_slop = calculateNormalSlope(
+    //     (center_x + origin_x_), (center_y + origin_y_), centerline_path_.poses[index].pose.position.x, centerline_path_.poses[index].pose.position.y);
+
+    // double theta = std::atan(normal_slop);
+
+    double theta = tf2::getYaw(centerline_path_.poses[index].pose.orientation);
 
     // 正方形の範囲を探索
     for (uint32_t y = y_start; y <= y_end; y++) {  // y_endを含むように修正
         for (uint32_t x = x_start; x <= x_end; x++) {  // x_endを含むように修正
-            int index = y * width_ + x;
+            std::pair<int, int> rotated_point = rotatePoint(x, y, theta - (M_PI / 2), map_x, map_y);
+            int new_x = rotated_point.first;
+            int new_y = rotated_point.second;
+            int index = new_y * width_ + new_x;
+
             if (x == map_x && y == map_y) {
                 map.data[index] = object_inside_cost_;
             } else {
-                double distance = std::sqrt((map_x - x) * (map_x - x) + (map_y - y) * (map_y - y)) * resolution_;
-                if (distance < object_inflation_radius_) {
+                double ellipse_center_x = map_x * resolution_;
+                double ellipse_center_y = map_y * resolution_;
+                double ellipse_major_axis = object_short_side_;
+                double ellipse_minor_axis = object_long_side_;
+
+                double dx = x * resolution_ - ellipse_center_x;
+                double dy = y * resolution_ - ellipse_center_y;
+                if ((dx * dx) / (ellipse_major_axis * ellipse_major_axis) + 
+                    (dy * dy) / (ellipse_minor_axis * ellipse_minor_axis) <= 1.0) {
+                    double distance = std::sqrt((map_x - x) * (map_x - x) + (map_y - y) * (map_y - y)) * resolution_;
                     double cost = object_min_cost_ + (object_max_cost_ - object_min_cost_) * (1.0 - (distance / object_inflation_radius_));
                     map.data[index] = std::max(map.data[index], static_cast<int8_t>(cost));
                 }
+                // double distance = std::sqrt((map_x - x) * (map_x - x) + (map_y - y) * (map_y - y)) * resolution_;
+                // if (distance < object_inflation_radius_) {
+                //     double cost = object_min_cost_ + (object_max_cost_ - object_min_cost_) * (1.0 - (distance / object_inflation_radius_));
+                //     map.data[index] = std::max(map.data[index], static_cast<int8_t>(cost));
+                // }
             }
         }
     }
+}
+
+double CostMap2D::calculateNormalSlope(double x1, double y1, double x2, double y2) {
+    // 垂直な線の場合、法線は水平になる
+    if (x1 == x2) {
+        return 0.0;  // 法線の傾きは水平
+    }
+    // 水平な線の場合、法線は垂直になる
+    if (y1 == y2) {
+        return std::numeric_limits<double>::infinity();  // 法線の傾きは無限大（垂直）
+    }
+    // 一般的な場合、法線の傾きを計算
+    return -(x2 - x1) / (y2 - y1);
 }
 
 //  平均0, 標準偏差がsigmaのガウス分布を作成して、確率変数がstochastic_variableのときの値を取得する

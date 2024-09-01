@@ -1,0 +1,3 @@
+string csv_path
+---
+nav_msgs/Path path

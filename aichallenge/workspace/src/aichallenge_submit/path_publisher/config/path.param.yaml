@@ -1,7 +1,9 @@
 /**:
   ros__parameters:
-    csv_path: "/aichallenge/workspace/src/aichallenge_submit/path_publisher/csv/raceline.csv"
-    downsample_rate: 1
+    raceline_csv_path: "/aichallenge/workspace/src/aichallenge_submit/path_publisher/csv/raceline.csv"
+    centerline_csv_path: "/aichallenge/workspace/src/aichallenge_submit/path_publisher/csv/centerline.csv"
+    raceline_downsample_rate: 1
+    centerline_downsample_rate: 5
     loop_count: 7
     publish_rate: 100
 

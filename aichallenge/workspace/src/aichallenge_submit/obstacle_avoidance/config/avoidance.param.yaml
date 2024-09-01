@@ -4,11 +4,11 @@
     attract: 20.0
     repulse: 500.0
     penalty_dist: 1.5 # 消す
-    forward_dist: 3.0
-    side_dist: 1.0
+    forward_dist: 1.5
+    side_dist: 1.5
 
     desired_dist: 0.8
-    start_index: 20
+    start_index: 10
     num_change_points: 20
     lookahead_dist: 0.5
 

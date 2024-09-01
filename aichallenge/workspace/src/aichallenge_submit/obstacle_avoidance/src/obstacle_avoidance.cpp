@@ -145,11 +145,11 @@ void ObstacleAvoidance::path_callback(const nav_msgs::msg::Path::SharedPtr msg) 
     path_ = *msg;
     path_received_ = true;
 
-    double x = msg->poses[0].pose.position.x;
-    double y = msg->poses[0].pose.position.y;
+    // double x = msg->poses[0].pose.position.x;
+    // double y = msg->poses[0].pose.position.y;
 
-    RCLCPP_INFO(this->get_logger(), "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
-    RCLCPP_INFO(this->get_logger(), "Index 0 Position: x: %f, y: %f", x, y);
+    // RCLCPP_INFO(this->get_logger(), "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
+    // RCLCPP_INFO(this->get_logger(), "Index 0 Position: x: %f, y: %f", x, y);
 }
 
 void ObstacleAvoidance::odometry_callback(const nav_msgs::msg::Odometry::SharedPtr msg) {
@@ -171,7 +171,7 @@ void ObstacleAvoidance::odometry_callback(const nav_msgs::msg::Odometry::SharedP
     // 回避を開始する点を取得
     auto odom_position = odometry_.pose.pose.position;
     double previous_distance = std::numeric_limits<double>::infinity();
-    size_t current_index = 0;
+    int current_index = 0;
     for (const auto & point : path_.poses) {
         auto path_position = point.pose.position;
 
@@ -193,11 +193,12 @@ void ObstacleAvoidance::odometry_callback(const nav_msgs::msg::Odometry::SharedP
         previous_distance = distance;
         current_index++;
     }
-    size_t start_index = current_index;
+    int start_index = current_index + start_index_;
+    current_index = start_index;
     // RCLCPP_INFO(this->get_logger(), "Obstacle Avoidance current index: %ld", current_index);
 
     generate_paths_.clear();
-    generate_paths_.push_back(path_.poses[current_index]);
+    generate_paths_.push_back(path_.poses[start_index]);
 
     for (int i = 0; i < num_change_points_; i ++) {
         // 現在の位置と姿勢を取得
@@ -206,7 +207,7 @@ void ObstacleAvoidance::odometry_callback(const nav_msgs::msg::Odometry::SharedP
         double theta = tf2::getYaw(generate_paths_[i].pose.orientation);
 
         // 車両が目標とする地点を求める
-        for (size_t j = current_index; j < path_.poses.size(); j++ ) {
+        for (int j = current_index; j < path_.poses.size(); j++ ) {
             double dist = std::sqrt(
                 std::pow(path_.poses[j].pose.position.x - x, 2) +
                 std::pow(path_.poses[j].pose.position.y - y, 2));
@@ -223,6 +224,8 @@ void ObstacleAvoidance::odometry_callback(const nav_msgs::msg::Odometry::SharedP
 
         // 候補点のpotentialを計算
         std::vector<double> potentials;
+        // RCLCPP_INFO(this->get_logger(), "kkkkkkkkkkkkkkkkkkkkkkkkkkkkkkk");
+        bool flag = false;
         for (const double angle : angles) {
             double angle_rad = (angle * M_PI) / 180.0;
             double new_x = x + desired_dist_ * cos(theta + angle_rad);
@@ -232,8 +235,17 @@ void ObstacleAvoidance::odometry_callback(const nav_msgs::msg::Odometry::SharedP
             double repulse = compute_repulsive_potential(new_x, new_y, theta + angle_rad);
             double potential = attract_ * attract + repulse_ * repulse;
 
+            // if (repulse != 0) {
+            //     flag = true;
+            //     RCLCPP_INFO(this->get_logger(), "Attract: %f, Repulse: %f", attract, repulse);
+            // }
+
             potentials.push_back(potential);
         }
+
+        // if (flag) {
+        //     RCLCPP_INFO(this->get_logger(), "kkkkkkkkkkkkkkkkkkkkkkkkkkkkkkk");
+        // };
 
         int max_index = std::distance(potentials.begin(), std::max_element(potentials.begin(), potentials.end()));
         double angle_rad = (angles[max_index] * M_PI) / 180.0;
@@ -244,7 +256,7 @@ void ObstacleAvoidance::odometry_callback(const nav_msgs::msg::Odometry::SharedP
         // TODO: 消す
         // double sample_x = x + desired_dist_ * cos(theta + angle_rad);
         // double sample_y = y + desired_dist_ * sin(theta + angle_rad);
-        // double sample_angel = angles[max_index];
+        // double sample_angel = angles[max_indexompute_attractive];
 
         // if (counter_ < aa) {
         //     RCLCPP_INFO(this->get_logger(), "next_x: %f, next_y: %f, next_angle: %f", sample_x, sample_y, sample_angel);
@@ -270,7 +282,7 @@ void ObstacleAvoidance::odometry_callback(const nav_msgs::msg::Odometry::SharedP
     double x = generate_paths_[num_change_points_].pose.position.x;
     double y = generate_paths_[num_change_points_].pose.position.y;
 
-    for (size_t i = start_index; i < start_index + margin_; i++) {
+    for (int i = start_index; i < start_index + margin_; i++) {
         double dist = std::sqrt(
             std::pow(path_.poses[i].pose.position.x - x, 2) +
             std::pow(path_.poses[i].pose.position.y - y, 2));
@@ -289,197 +301,35 @@ void ObstacleAvoidance::odometry_callback(const nav_msgs::msg::Odometry::SharedP
 
     // before path
     int count_a = 0;
-    for (size_t i = 0; i < start_index; i++) {
+    for (int i = 0; i < start_index; i++) {
         new_path.poses.push_back(path_.poses[i]);
         count_a++;
     }
     // generate path
     int count_b = 0;
-    for (size_t i = 0; i < generate_paths_.size(); i++) {
+    for (int i = 0; i < generate_paths_.size(); i++) {
         new_path.poses.push_back(generate_paths_[i]);
         count_b++;
     }
     // after path
     int count_c = 0;
-    for (size_t i = min_goal_index; i < path_.poses.size(); i++) {
+    for (int i = min_goal_index; i < path_.poses.size(); i++) {
         new_path.poses.push_back(path_.poses[i]);
         count_c++;
     }
 
-    RCLCPP_INFO(this->get_logger(), "count_a: %d, count_b: %d, count_c: %d", count_a, count_b, count_c);
+    // RCLCPP_INFO(this->get_logger(), "count_a: %d, count_b: %d, count_c: %d", count_a, count_b, count_c);
 
     avoidance_path_pub_->publish(new_path);
 
     counter_++;
 }
 
-// void ObstacleAvoidance::odometry_callback(const nav_msgs::msg::Odometry::SharedPtr msg) {
-//     odometry_ = *msg;
-
-//     if (!(costmap_received_ && path_received_)) {
-//         return;
-//     }
-    
-//     // 回避を開始する点を取得
-//     auto odom_position = odometry_.pose.pose.position;
-//     double previous_distance = std::numeric_limits<double>::infinity();
-//     size_t current_index = 0;
-//     for (const auto & point : path_.points) {
-//         auto path_position = point.point.pose.position;
-//         double distance = std::sqrt(
-//             std::pow(odom_position.x - path_position.x, 2) +
-//             std::pow(odom_position.y - path_position.y, 2)
-//         );
-
-//         if (distance > previous_distance) {
-//             current_index -= 1;
-//             break;
-//         }
-
-//         previous_distance = distance;
-//         current_index++;
-//     }
-//     size_t start_index = current_index;
-
-//     // TODO: 生成した回避経路が毎回リセットされるのはどうにかする
-//     generate_paths_.clear();
-//     generate_paths_.push_back(path_.points[current_index]);
-
-//     for (int i = 0; i < num_change_points_; i ++) {
-//         // 現在の位置と姿勢を取得
-//         double x = generate_paths_[i].point.pose.position.x;
-//         double y = generate_paths_[i].point.pose.position.y;
-//         double theta = tf2::getYaw(generate_paths_[i].point.pose.orientation);
-
-//         // 車両が目標とする地点を求める
-//         for (size_t j = current_index; j < path_.points.size(); j++ ) {
-//             double dist = std::sqrt(
-//                 std::pow(path_.points[j].point.pose.position.x - x, 2) +
-//                 std::pow(path_.points[j].point.pose.position.y - y, 2));
-
-//             if (dist > lookahead_dist_) {
-//                 current_index = j;
-//                 break;
-//             } else {
-//                 continue;
-//             }
-//         }
-//         double goal_x = path_.points[current_index].point.pose.position.x;
-//         double goal_y = path_.points[current_index].point.pose.position.y;
-
-//         // 候補点のpotentialを計算
-//         std::vector<double> potentials;
-//         for (const double angle : angles) {
-//             double angle_rad = (angle * M_PI) / 180.0;
-//             double new_x = x + desired_dist_ * cos(theta + angle_rad);
-//             double new_y = y + desired_dist_ * sin(theta + angle_rad);
-
-//             double attract = compute_attractive_potential(new_x, new_y, goal_x, goal_y);
-//             double repulse = compute_repulsive_potential(new_x, new_y, theta + angle_rad);
-//             double potential = attract_ * attract + repulse_ * repulse;
-
-//             potentials.push_back(potential);
-//         }
-
-//         int max_index = std::distance(potentials.begin(), std::max_element(potentials.begin(), potentials.end()));
-//         double angle_rad = (angles[max_index] * M_PI) / 180.0;
-
-//         std::vector<double> orientation;
-//         euler_to_quaternion(0, 0, angle_rad + theta, orientation);
-
-//         // TODO: 消す
-//         // double sample_x = x + desired_dist_ * cos(theta + angle_rad);
-//         // double sample_y = y + desired_dist_ * sin(theta + angle_rad);
-//         // double sample_angel = angles[max_index];
-
-//         // if (counter_ < aa) {
-//         //     RCLCPP_INFO(this->get_logger(), "next_x: %f, next_y: %f, next_angle: %f", sample_x, sample_y, sample_angel);
-//         // }
-
-//         PathPointWithLaneId next_point = PathPointWithLaneId();
-//         next_point.point.pose.position.x = x + desired_dist_ * cos(theta + angle_rad);
-//         next_point.point.pose.position.y = y + desired_dist_ * sin(theta + angle_rad);
-//         next_point.point.pose.position.z = 43.1;
-
-//         next_point.point.pose.orientation.x = orientation[0];
-//         next_point.point.pose.orientation.y = orientation[1];
-//         next_point.point.pose.orientation.z = orientation[2];
-//         next_point.point.pose.orientation.w = orientation[3];
-
-//         next_point.point.longitudinal_velocity_mps = 0.0;
-//         next_point.point.lateral_velocity_mps = 0.0;
-//         next_point.point.heading_rate_rps = 0.0;
-//         next_point.point.is_final = false;
-
-//         next_point.lane_ids = path_.points[start_index].lane_ids;
-
-//         generate_paths_.push_back(next_point);
-//     }
-
-//     // 最後のステップに一番近いpointを探す
-//     int min_goal_index = 100;
-//     double min_dist = std::numeric_limits<double>::infinity();
-
-//     double x = generate_paths_[num_change_points_].point.pose.position.x;
-//     double y = generate_paths_[num_change_points_].point.pose.position.y;
-//     for (size_t i = start_index + margin_; i < path_.points.size(); i++) {
-//         double dist = std::sqrt(
-//             std::pow(path_.points[i].point.pose.position.x - x, 2) +
-//             std::pow(path_.points[i].point.pose.position.y - y, 2));
-
-//         if (dist <= min_dist) {
-//             min_dist = dist;
-//         } else {
-//             min_goal_index = i + 1;
-//             break;
-//         }
-//     }
-
-//     // RCLCPP_INFO(this->get_logger(), "=======%d=======", min_goal_index);
-
-//     PathWithLaneId new_path = PathWithLaneId();
-//     new_path.header = path_.header;
-//     new_path.left_bound = path_.left_bound;
-//     new_path.right_bound = path_.right_bound;
-
-//     // before path
-//     for (size_t i = 0; i < start_index; i++) {
-//         new_path.points.push_back(path_.points[i]);
-//     }
-//     // generate path
-//     for (size_t i = 0; i < generate_paths_.size(); i++) {
-//         new_path.points.push_back(generate_paths_[i]);
-//     }
-//     // after path
-//     for (size_t i = min_goal_index; i < path_.points.size(); i++) {
-//         new_path.points.push_back(path_.points[i]);
-//     }
-
-//     avoidance_path_pub_->publish(new_path);
-
-//     counter_++;
-// }
-
 double ObstacleAvoidance::compute_attractive_potential(double x, double y, double gx, double gy) {
     // ゴールとの距離が小さいほど評価が高い
 
-    return 1.0 / std::sqrt(std::pow(x - gx, 2) + std::pow(y - gy, 2));
+    return -1 * std::sqrt(std::pow(x - gx, 2) + std::pow(y - gy, 2));
 }
-
-// TODO: 消す
-// double ObstacleAvoidance::compute_repulsive_potential(double x, double y, const std::vector<double>& ox, const std::vector<double>& oy) {
-//     // 障害物との距離が任意距離より近いと減点
-
-//     double repulse = 0.0;
-//     for (size_t i = 0; i < ox.size(); ++i) {
-//         double dist = std::sqrt(std::pow(x - ox[i], 2) + std::pow(y - oy[i], 2));
-//         if (dist < penalty_dist_) {
-//             repulse += -1.0 / dist;
-//         }
-//     }
-
-//     return repulse;
-// }
 
 double ObstacleAvoidance::compute_repulsive_potential(double x, double y, double theta)
 {
@@ -505,9 +355,19 @@ double ObstacleAvoidance::compute_repulsive_potential(double x, double y, double
             int index = new_y * width_ + new_x;
 
             if (new_x >= 0 && new_x < width_ && new_y >= 0 && new_y < height_) {
+                double dist = std::sqrt(std::pow((center_x - x) * resolution_, 2) + std::pow((center_y - y) * resolution_, 2));
+                double weight = (dist > 0) ? 1.0 / dist : 0.0;
                 int cost = costmap_.data[index];
-                repulse -= cost;
-                if (cost != 127 && cost != 0) {
+                repulse -= cost * weight;
+                // if (cost != 127 && cost != 0) {
+                //     flag = true;
+                //     RCLCPP_INFO(this->get_logger(), "jjjjjjjjjjjj");
+                // }
+                // if (cost <= 80 && cost != 0) {
+                //     flag = true;
+                //     RCLCPP_INFO(this->get_logger(), "jjjjjjjjjjjj");
+                // }
+                if (!(cost >= 101) && cost != 0) {
                     flag = true;
                     // RCLCPP_INFO(this->get_logger(), "jjjjjjjjjjjj");
                 }
@@ -525,9 +385,9 @@ double ObstacleAvoidance::compute_repulsive_potential(double x, double y, double
 
     costmap_2d_pub_->publish(costmap);
 
-    if (repulse != 0.0) {
-        RCLCPP_INFO(this->get_logger(), "repulse: %d", repulse);
-    }
+    // if (repulse != 0.0) {
+    //     RCLCPP_INFO(this->get_logger(), "repulse: %d", repulse);
+    // }
 
     return repulse;
 }
