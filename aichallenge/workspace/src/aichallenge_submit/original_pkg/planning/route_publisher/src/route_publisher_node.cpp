@@ -98,6 +98,8 @@ private:
 
             target_pose_x = goal_pose_x_;
             target_pose_y = goal_pose_y_;
+
+            RCLCPP_INFO(this->get_logger(), "target pit pose");
         }
         else if (current_section_ == 7)
         {
@@ -113,6 +115,8 @@ private:
 
             target_pose_x = harf_pose_x_;
             target_pose_y = harf_pose_y_;
+
+            RCLCPP_INFO(this->get_logger(), "target harf pose");
         }
 
         route_pub_->publish(route_msg);
