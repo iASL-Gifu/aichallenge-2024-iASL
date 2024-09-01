@@ -61,15 +61,16 @@
 
     # pit
     goal_pose:
-      position.x: 89626.8771875
-      position.y: 43134.941875
+      position.x: 89627.0
+      position.y: 43136.25
       position.z: 42.1
       orientation.x: 0.0
       orientation.y: -0.0
       orientation.z: -0.8788172006607056
       orientation.w: -0.47715866565704346
 
-    target_threthold: 0.5
-    delay_route_publish_ms: 600
+    proximity_threshold_harf: 0.7
+    proximity_threshold_goal: 1.5
+    delay_route_publish_ms: 300
 
       
