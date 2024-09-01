@@ -58,8 +58,12 @@ private:
     // function
     int find_nearest_point_index(double x,double y);
     std::vector<int> get_indices(int index, int start, int end);
+    void euler_to_quaternion(double phi, double theta, double psi, std::vector<double>& result);
+
 
     // variable
+    // first: 進む距離, second: 角度
+    std::vector<std::pair<double, double>> generate_path_;
 };
 
 }

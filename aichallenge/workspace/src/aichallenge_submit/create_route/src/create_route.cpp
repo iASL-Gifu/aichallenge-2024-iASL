@@ -46,6 +46,36 @@ Create_route::Create_route() : Node("create_route"), get_path_(false), costmap_r
         std::chrono::seconds(1),
         std::bind(&Create_route::send_path_request, this)
     );
+
+    auto point1 = std::make_pair(1.0, -24.0);
+    auto point2 = std::make_pair(1.0, 0.0);
+    auto point3 = std::make_pair(1.0, 0.0);
+    auto point4 = std::make_pair(1.0, 0.0);
+    auto point5 = std::make_pair(1.0, 0.0);
+    auto point6 = std::make_pair(1.0, 0.0);
+    auto point7 = std::make_pair(1.0, 0.0);
+    auto point8 = std::make_pair(1.0, 0.0);
+    auto point9 = std::make_pair(1.0, 0.0);
+    auto point10 = std::make_pair(1.0, 0.0);
+    auto point11 = std::make_pair(1.0, 0.0);
+    auto point12 = std::make_pair(1.0, 0.0);
+    auto point13 = std::make_pair(1.0, 0.0);
+    auto point14 = std::make_pair(1.0, 0.0);
+
+    generate_path_.push_back(point1);
+    generate_path_.push_back(point2);
+    generate_path_.push_back(point3);
+    generate_path_.push_back(point4);
+    generate_path_.push_back(point5);
+    generate_path_.push_back(point6);
+    // generate_path_.push_back(point7);
+    // generate_path_.push_back(point8);
+    // generate_path_.push_back(point9);
+    // generate_path_.push_back(point10);
+    // generate_path_.push_back(point11);
+    // generate_path_.push_back(point12);
+    // generate_path_.push_back(point13);
+    // generate_path_.push_back(point14);
 }
 
 void Create_route::costmap_callback(const nav_msgs::msg::OccupancyGrid::SharedPtr msg) {
@@ -98,26 +128,65 @@ std::shared_ptr<path_service::srv::GetObstaclePath::Response> response)
 
     int nearest_index = find_nearest_point_index(x, y);
     std::vector<int> indices = get_indices(nearest_index, start_index_, end_index_);
-    avoidance_path_ = section_path_;
     // デバッグ出力
     std::string indices_str;
     for (int idx : indices) {
         RCLCPP_INFO(this->get_logger(), "Selected indices : %i", idx);
     }
+
+    nav_msgs::msg::Path custom_path = nav_msgs::msg::Path();
+
+    // pathを生成する
+    double start_x = section_path_.poses[indices[0]].pose.position.x;
+    double start_y = section_path_.poses[indices[0]].pose.position.y;
+    double theta = tf2::getYaw(section_path_.poses[indices[0]].pose.orientation);
+
+    for (int i = 0; i < generate_path_.size(); i++) {
+        double desired_dist = generate_path_[i].first;
+        double angle_rad = (generate_path_[i].second * M_PI) / 180.0;
+
+        double new_x = start_x + desired_dist * cos(theta + angle_rad);
+        double new_y = start_y + desired_dist * sin(theta + angle_rad);
+
+        geometry_msgs::msg::PoseStamped next_point = geometry_msgs::msg::PoseStamped();
+        next_point.pose.position.x = new_x;
+        next_point.pose.position.y = new_y;
+        next_point.pose.position.z = 43.1;
+
+        std::vector<double> orientation;
+        euler_to_quaternion(0, 0, theta + angle_rad, orientation);
+
+        next_point.pose.orientation.x = orientation[0];
+        next_point.pose.orientation.y = orientation[1];
+        next_point.pose.orientation.z = orientation[2];
+        next_point.pose.orientation.w = orientation[3];
+
+        custom_path.poses.push_back(next_point);
+
+        start_x = new_x;
+        start_y = new_y;
+        theta += angle_rad;
+    }
     
-    // avoidance_path_.poses.erase(avoidance_path_.poses.begin() + indices[0], avoidance_path_.poses.begin() + indices[1] + 1);
-    // std::vector<geometry_msgs::msg::PoseStamped> newElements;
-    // std::vector<int> newData = {1, 2, 3, 4};
-    // for (int data : newData) {
-    //     geometry_msgs::msg::PoseStamped newPose;
-    //     newPose.pose.position.x = data;
-    //     newElements.push_back(newPose);
-    // }
-    // avoidance_path_.poses.insert(section_path_.poses.begin() + indices[0], newElements.begin(), newElements.end());
+    nav_msgs::msg::Path new_path = nav_msgs::msg::Path();
+    new_path.header = section_path_.header;
+
+    for (int i = 0; i < indices[0]; i ++) {
+        new_path.poses.push_back(section_path_.poses[i]);
+    }
+
+    for (int i = 0; i < custom_path.poses.size(); i++) {
+        new_path.poses.push_back(custom_path.poses[i]);
+    }
+
+    for (int i = indices[1]; i < section_path_.poses.size() - end_index_; i++) {
+        new_path.poses.push_back(section_path_.poses[i]);
+    }
+
     avoidance_path_.header.stamp = this->now();
     avoidance_path_.header.frame_id = "map";
 
-    response->path = avoidance_path_;
+    response->path = new_path;
     RCLCPP_INFO(this->get_logger(), "Client Path size: %zu", avoidance_path_.poses.size());
     RCLCPP_INFO(this->get_logger(), "Obstacle Path Send");
 }
@@ -130,7 +199,7 @@ int Create_route::find_nearest_point_index(double x,double y) {
     for (size_t i = 0; i < section_path_.poses.size(); i++) {
         double distance = std::sqrt(
             std::pow(section_path_.poses[i].pose.position.x - x, 2) +
-            std::pow(section_path_.poses[i].pose.position.x - y, 2)
+            std::pow(section_path_.poses[i].pose.position.y - y, 2)
         );
 
         if (distance < min_distance) {
@@ -148,6 +217,31 @@ std::vector<int> Create_route::get_indices(int index, int start, int end) {
     int start_index = std::max(0, index - start);
     int end_index = std::min(section_path_.poses.size() - 1, static_cast<size_t>(index + end));
     return {start_index, end_index};
+}
+
+void Create_route::euler_to_quaternion(double phi, double theta, double psi, std::vector<double>& result) {
+    double phi_half = phi / 2;
+    double theta_half = theta / 2;
+    double psi_half = psi / 2;
+
+    double cos_phi_half = std::cos(phi_half);
+    double sin_phi_half = std::sin(phi_half);
+    double cos_theta_half = std::cos(theta_half);
+    double sin_theta_half = std::sin(theta_half);
+    double cos_psi_half = std::cos(psi_half);
+    double sin_psi_half = std::sin(psi_half);
+
+    double w = cos_phi_half * cos_theta_half * cos_psi_half + sin_phi_half * sin_theta_half * sin_psi_half;
+    double x = sin_phi_half * cos_theta_half * cos_psi_half - cos_phi_half * sin_theta_half * sin_psi_half;
+    double y = cos_phi_half * sin_theta_half * cos_psi_half + sin_phi_half * cos_theta_half * sin_psi_half;
+    double z = cos_phi_half * cos_theta_half * sin_psi_half - sin_phi_half * sin_theta_half * cos_psi_half;
+
+    result.push_back(x);
+    result.push_back(y);
+    result.push_back(z);
+    result.push_back(w);
+
+    return;
 }
 
 }
