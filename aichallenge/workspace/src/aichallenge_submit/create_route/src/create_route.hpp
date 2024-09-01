@@ -43,7 +43,9 @@ private:
     rclcpp::TimerBase::SharedPtr path_timer_;
     void send_path_request();
     nav_msgs::msg::Path section_path_;
+    nav_msgs::msg::Path center_path_;
     bool get_path_;
+    bool get_center_path_;
 
     // Service
     rclcpp::Service<path_service::srv::GetObstaclePath>::SharedPtr get_obstacle_path_srv_;
@@ -54,16 +56,24 @@ private:
     // param
     int start_index_, end_index_;
     int section_count_;
+    std::string left_csv_path_, right_csv_path_;
+    double margin_radius_;
+    double angle_interval_;
+    double collision_checker_;
 
     // function
     int find_nearest_point_index(double x,double y);
     std::vector<int> get_indices(int index, int start, int end);
     void euler_to_quaternion(double phi, double theta, double psi, std::vector<double>& result);
-
+    void load_csv(std::string csv_path, int downsample_rate, std::vector<geometry_msgs::msg::PoseStamped>& point);
 
     // variable
     // first: 進む距離, second: 角度
     std::vector<std::pair<double, double>> generate_path_;
+    std::vector<geometry_msgs::msg::PoseStamped> left_path_;
+    std::vector<geometry_msgs::msg::PoseStamped> right_path_;
+    rclcpp::TimerBase::SharedPtr delayed_timer_;
+
 };
 
 }

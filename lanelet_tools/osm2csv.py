@@ -3,16 +3,16 @@ import csv
 import os
 
 # OSMファイルのパス
-osm_file = os.path.expanduser('../aichallenge/workspace/src/aichallenge_submit/aichallenge_submit_launch/map/lanelet2_map.osm')
+osm_file = os.path.expanduser('./osm/sample1.osm')
 
 # 出力するCSVファイルのパス
 output_files = {
-    'short_left': '../csv/osm_to_csv/short_left.csv',
-    'long_left': '../csv/osm_to_csv/long_left.csv',
-    'short_right': '../csv/osm_to_csv/short_right.csv',
-    'long_right': '../csv/osm_to_csv/long_right.csv',
-    'short_center': '../csv/osm_to_csv/short_center.csv',
-    'long_center': '../csv/osm_to_csv/long_center.csv'
+    'short_left': './csv/osm_to_csv/short_left.csv',
+    'long_left': './csv/osm_to_csv/long_left.csv',
+    'short_right': './csv/osm_to_csv/short_right.csv',
+    'long_right': './csv/osm_to_csv/long_right.csv',
+    'short_center': './csv/osm_to_csv/short_center.csv',
+    'long_center': './csv/osm_to_csv/long_center.csv'
 }
 
 # OSMファイルを解析

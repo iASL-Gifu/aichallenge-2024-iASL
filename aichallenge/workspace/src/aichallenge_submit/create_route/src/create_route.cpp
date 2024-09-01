@@ -3,11 +3,14 @@
 #include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
 #include <cmath>
 #include <utility>
+#include <fstream>
+#include <sstream>
+#include <string>
 
 namespace create_route
 {
 
-Create_route::Create_route() : Node("create_route"), get_path_(false), costmap_received_(false)
+Create_route::Create_route() : Node("create_route"), get_path_(false), get_center_path_(false), costmap_received_(false)
 {
     RCLCPP_INFO(this->get_logger(), "============= create_route ==============");
 
@@ -20,6 +23,40 @@ Create_route::Create_route() : Node("create_route"), get_path_(false), costmap_r
 
     this->declare_parameter("section_count", 100);
     section_count_ = this->get_parameter("section_count").as_int();
+
+    this->declare_parameter("left_csv_path", std::string("left_csv_path"));
+    left_csv_path_ = this->get_parameter("left_csv_path").as_string();
+
+    this->declare_parameter("right_csv_path", std::string("right_csv_path"));
+    right_csv_path_ = this->get_parameter("right_csv_path").as_string();
+
+    this->declare_parameter("margin_radius", 100.0);
+    margin_radius_ = this->get_parameter("margin_radius").as_double();
+
+    this->declare_parameter("angle_interval", 100.0);
+    angle_interval_ = this->get_parameter("angle_interval").as_double();
+
+    this->declare_parameter("collision_checker", 100.0);
+    collision_checker_ = this->get_parameter("collision_checker").as_double();
+
+    this->declare_parameter("left_start_index", 1);
+    left_start_index_ = this->get_parameter("left_start_index").as_int();
+
+    this->declare_parameter("left_end_index", 1);
+    left_end_index_ = this->get_parameter("left_end_index").as_int();
+
+    this->declare_parameter("right_start_index", 1);
+    right_start_index_ = this->get_parameter("right_start_index").as_int();
+
+    this->declare_parameter("right_end_index", 1);
+    right_end_index_ = this->get_parameter("right_end_index").as_int();
+
+    this->declare_parameter("center_start_index", 1);
+    center_start_index_ = this->get_parameter("center_start_index").as_int();
+
+    this->declare_parameter("center_end_index", 1);
+    center_end_index_ = this->get_parameter("center_end_index").as_int();
+
 
     costmap_sub_ = this->create_subscription<nav_msgs::msg::OccupancyGrid>(
         "costmap_2d", 1,
@@ -42,40 +79,25 @@ Create_route::Create_route() : Node("create_route"), get_path_(false), costmap_r
         RCLCPP_INFO(this->get_logger(), "wait for path service to appear...");
     }
 
-    path_timer_ = this->create_wall_timer(
-        std::chrono::seconds(1),
-        std::bind(&Create_route::send_path_request, this)
+    // タイマーの初期化
+    delayed_timer_ = this->create_wall_timer(
+        std::chrono::seconds(section_count_ * 3),  // 'x'を必要な秒数に変更
+        static_cast<std::function<void()>>([this]() mutable {  // 'this' をキャプチャ
+            // 指定の処理を実行
+            path_timer_ = this->create_wall_timer(
+                std::chrono::seconds(1),
+                std::bind(&Create_route::send_path_request, this)
+            );
+
+            load_csv(left_csv_path_, 1, left_path_);
+            load_csv(right_csv_path_, 1, right_path_);
+
+            // タイマーをキャンセルして再実行を防止
+            this->delayed_timer_->cancel();
+        })
     );
 
-    auto point1 = std::make_pair(1.0, -24.0);
-    auto point2 = std::make_pair(1.0, 0.0);
-    auto point3 = std::make_pair(1.0, 0.0);
-    auto point4 = std::make_pair(1.0, 0.0);
-    auto point5 = std::make_pair(1.0, 0.0);
-    auto point6 = std::make_pair(1.0, 0.0);
-    auto point7 = std::make_pair(1.0, 0.0);
-    auto point8 = std::make_pair(1.0, 0.0);
-    auto point9 = std::make_pair(1.0, 0.0);
-    auto point10 = std::make_pair(1.0, 0.0);
-    auto point11 = std::make_pair(1.0, 0.0);
-    auto point12 = std::make_pair(1.0, 0.0);
-    auto point13 = std::make_pair(1.0, 0.0);
-    auto point14 = std::make_pair(1.0, 0.0);
-
-    generate_path_.push_back(point1);
-    generate_path_.push_back(point2);
-    generate_path_.push_back(point3);
-    generate_path_.push_back(point4);
-    generate_path_.push_back(point5);
-    generate_path_.push_back(point6);
-    // generate_path_.push_back(point7);
-    // generate_path_.push_back(point8);
-    // generate_path_.push_back(point9);
-    // generate_path_.push_back(point10);
-    // generate_path_.push_back(point11);
-    // generate_path_.push_back(point12);
-    // generate_path_.push_back(point13);
-    // generate_path_.push_back(point14);
+    RCLCPP_INFO(this->get_logger(), "Create Route %d xxxxxxxx", section_count_);
 }
 
 void Create_route::costmap_callback(const nav_msgs::msg::OccupancyGrid::SharedPtr msg) {
@@ -92,30 +114,54 @@ void Create_route::costmap_callback(const nav_msgs::msg::OccupancyGrid::SharedPt
 //sectionごとのpathをリクエストする関数
 void Create_route::send_path_request()
 {
-    if (get_path_) {
-        path_timer_->cancel();
+    // 両方のパスが取得できているかを確認
+    if (get_path_ && get_center_path_) {
+        path_timer_->cancel();  // タイマーを停止
         return;
     }
+
     // リクエストを作成
     auto request_section_path = std::make_shared<path_service::srv::GetPath::Request>();
     request_section_path->csv_path = std::to_string(section_count_);
 
     using ServiceResponseFuture = rclcpp::Client<path_service::srv::GetPath>::SharedFuture;
 
-    // レスポンス処理
+    // レスポンス処理 (セクションパス)
     auto response_section_path_callback = [this](ServiceResponseFuture future) {
         auto result = future.get();
         section_path_ = result->path;
 
         if (section_path_.poses.size() > 0) {
             RCLCPP_INFO(this->get_logger(), "Path section received with %ld points", section_path_.poses.size());
-            get_path_ = true;
+            get_path_ = true;  // セクションパスを取得
+        }
+    };
+
+    // リクエストを作成（センターパス）
+    auto request_center_path = std::make_shared<path_service::srv::GetPath::Request>();
+    request_center_path->csv_path = "centerline";
+
+    // レスポンス処理 (センターパス)
+    auto response_center_path_callback = [this](ServiceResponseFuture future) {
+        auto result = future.get();
+        center_path_ = result->path;
+
+        if (center_path_.poses.size() > 0) {
+            RCLCPP_INFO(this->get_logger(), "Path center received with %ld points", center_path_.poses.size());
+            get_center_path_ = true;  // センターパスを取得
         }
     };
 
     // 非同期リクエスト送信
-    get_path_client_->async_send_request(request_section_path, response_section_path_callback);
+    if (!get_path_) {
+        get_path_client_->async_send_request(request_section_path, response_section_path_callback);
+    }
+
+    if (!get_center_path_) {
+        get_path_client_->async_send_request(request_center_path, response_center_path_callback);
+    }
 }
+
 
 //障害物の座標が入ったリクエストを受け取ったとき、sectionのpathを変更して返す
 void Create_route::handle_get_obstacle_path(const std::shared_ptr<path_service::srv::GetObstaclePath::Request> request,
@@ -134,60 +180,117 @@ std::shared_ptr<path_service::srv::GetObstaclePath::Response> response)
         RCLCPP_INFO(this->get_logger(), "Selected indices : %i", idx);
     }
 
-    nav_msgs::msg::Path custom_path = nav_msgs::msg::Path();
+    nav_msgs::msg::Path pathes = nav_msgs::msg::Path();
+    pathes.header = section_path_.header;
 
-    // pathを生成する
-    double start_x = section_path_.poses[indices[0]].pose.position.x;
-    double start_y = section_path_.poses[indices[0]].pose.position.y;
-    double theta = tf2::getYaw(section_path_.poses[indices[0]].pose.orientation);
+    double race_dist = std::numeric_limits<double>::infinity();
+    for (int i = 0; i < section_path_.poses.size(); i++) {
+        double dist = std::sqrt(
+            std::pow(x - section_path_.poses[i].pose.position.x, 2) + 
+            std::pow(y - section_path_.poses[i].pose.position.y, 2)
+        );
 
-    for (int i = 0; i < generate_path_.size(); i++) {
-        double desired_dist = generate_path_[i].first;
-        double angle_rad = (generate_path_[i].second * M_PI) / 180.0;
+        if (dist < race_dist) {
+            race_dist = dist;
+        }
+    }
 
-        double new_x = start_x + desired_dist * cos(theta + angle_rad);
-        double new_y = start_y + desired_dist * sin(theta + angle_rad);
+    if (race_dist > collision_checker_) {
+        response->path = section_path_;
+    } else {
+        double left_dist = std::numeric_limits<double>::infinity();
+        for (int i = 0; i < left_path_.size(); i++) {
+            double dist = std::sqrt(
+                std::pow(x - left_path_[i].pose.position.x, 2) +
+                std::pow(y - left_path_[i].pose.position.y, 2)
+            );
 
-        geometry_msgs::msg::PoseStamped next_point = geometry_msgs::msg::PoseStamped();
-        next_point.pose.position.x = new_x;
-        next_point.pose.position.y = new_y;
-        next_point.pose.position.z = 43.1;
+            if (dist < left_dist) {
+                left_dist = dist;
+            }
+        }
 
-        std::vector<double> orientation;
-        euler_to_quaternion(0, 0, theta + angle_rad, orientation);
+        double right_dist = std::numeric_limits<double>::infinity();
+        for (int i = 0; i < right_path_.size(); i++) {
+            double dist = sqrt(
+                std::pow(x - right_path_[i].pose.position.x, 2) +
+                std::pow(y - right_path_[i].pose.position.y, 2)
+            );
 
-        next_point.pose.orientation.x = orientation[0];
-        next_point.pose.orientation.y = orientation[1];
-        next_point.pose.orientation.z = orientation[2];
-        next_point.pose.orientation.w = orientation[3];
+            if (dist < right_dist) {
+                right_dist = dist;
+            }
+        }
 
-        custom_path.poses.push_back(next_point);
+        double center_dist = std::numeric_limits<double>::infinity();
+        int index = 0;
+        for (int i = 0; i < center_path_.poses.size(); i++) {
+            double dist = sqrt(
+                std::pow(x - center_path_.poses[i].pose.position.x, 2) +
+                std::pow(y - center_path_.poses[i].pose.position.y, 2)
+            );
 
-        start_x = new_x;
-        start_y = new_y;
-        theta += angle_rad;
+            if (dist < center_dist) {
+                index = i;
+                center_dist = dist;
+            }
+        }
+
+        double center_theta = tf2::getYaw(center_path_.poses[index].pose.orientation);
+
+        RCLCPP_INFO(this->get_logger(), "left dist: %f, right dist: %f", left_dist, right_dist);
+
+        std::vector<geometry_msgs::msg::PoseStamped> new_path;
+        double theta_start = 0.0;
+        double theta_end = 0.0;
+        if (left_dist < right_dist) {
+            theta_start = -180;
+            theta_end = 0;
+
+            for (double theta = theta_start; theta <= theta_end; theta += angle_interval_) {
+                double new_x = x + margin_radius_ * cos(theta * (M_PI / 180.0) + center_theta);
+                double new_y = y + margin_radius_ * sin(theta * (M_PI / 180.0) + center_theta);
+
+                geometry_msgs::msg::PoseStamped point;
+                point.pose.position.x = new_x;
+                point.pose.position.y = new_y;
+                point.pose.position.z = 43.1;
+
+                new_path.push_back(point);
+            }
+        } else {
+            theta_start = 180;
+            theta_end = 0;
+
+            for (double theta = theta_start; theta > theta_end; theta -= angle_interval_) {
+                double new_x = x + margin_radius_ * cos(theta * (M_PI / 180.0) + center_theta);
+                double new_y = y + margin_radius_ * sin(theta * (M_PI / 180.0) + center_theta);
+
+                geometry_msgs::msg::PoseStamped point;
+                point.pose.position.x = new_x;
+                point.pose.position.y = new_y;
+                point.pose.position.z = 43.1;
+
+                new_path.push_back(point);
+            }
+        }
+
+        for (int i = 0; i < indices[0]; i ++) {
+            pathes.poses.push_back(section_path_.poses[i]);
+        }
+
+        for (int i = 0; i < new_path.size(); i++) {
+            pathes.poses.push_back(new_path[i]);
+        }
+
+        for (int i = indices[1]; i < section_path_.poses.size() - indices[1]; i++) {
+            pathes.poses.push_back(section_path_.poses[i]);
+        }
+
+        response->path = pathes;
     }
     
-    nav_msgs::msg::Path new_path = nav_msgs::msg::Path();
-    new_path.header = section_path_.header;
-
-    for (int i = 0; i < indices[0]; i ++) {
-        new_path.poses.push_back(section_path_.poses[i]);
-    }
-
-    for (int i = 0; i < custom_path.poses.size(); i++) {
-        new_path.poses.push_back(custom_path.poses[i]);
-    }
-
-    for (int i = indices[1]; i < section_path_.poses.size() - end_index_; i++) {
-        new_path.poses.push_back(section_path_.poses[i]);
-    }
-
-    avoidance_path_.header.stamp = this->now();
-    avoidance_path_.header.frame_id = "map";
-
-    response->path = new_path;
-    RCLCPP_INFO(this->get_logger(), "Client Path size: %zu", avoidance_path_.poses.size());
+    RCLCPP_INFO(this->get_logger(), "Client Path size: %zu", response->path.poses.size());
     RCLCPP_INFO(this->get_logger(), "Obstacle Path Send");
 }
 
@@ -242,6 +345,48 @@ void Create_route::euler_to_quaternion(double phi, double theta, double psi, std
     result.push_back(w);
 
     return;
+}
+
+void Create_route::load_csv(std::string csv_path, int downsample_rate, std::vector<geometry_msgs::msg::PoseStamped>& point) {
+    RCLCPP_INFO(this->get_logger(), "--------------- Load CSV %s ---------------", csv_path.c_str());
+
+    std::ifstream file(csv_path);
+    std::string line;
+    int line_count = 0;
+    if (!file.is_open()) {
+        RCLCPP_INFO(this->get_logger(), "Failed to open CSV file");
+    } else {
+        RCLCPP_INFO(this->get_logger(), "Reading CSV file");
+        std::getline(file, line);
+        while (std::getline(file, line))
+        {
+            line_count++;
+            
+            if (line_count % downsample_rate != 0)
+            {
+                continue;
+            }
+
+            std::stringstream ss(line);
+            std::string x, y, z;
+            std::getline(ss, x, ',');
+            std::getline(ss, y, ',');
+            std::getline(ss, z, ',');
+
+            geometry_msgs::msg::PoseStamped pose;
+            pose.pose.position.x = std::stof(x);
+            pose.pose.position.y = std::stof(y);
+            pose.pose.position.z = 43.1;
+
+            pose.header.frame_id = "map";
+            pose.header.stamp = this->now();
+
+            point.push_back(pose);
+        }
+        file.close();
+    }
+
+    RCLCPP_INFO(this->get_logger(), "Loaded %zu points", point.size());
 }
 
 }
