@@ -1,0 +1,203 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<launch>
+
+  <group>
+
+    <push-ros-namespace namespace="perception"/>
+      <!-- object_info_publisher-->
+      <node pkg="object_info_publisher" exec="object_info_publisher_node" name="object_info_publisher_node" output="screen">
+        <param name="scale" value="0.8" />
+        <param name="scale_of3" value="0.3" />
+        <remap from="/perception/object_recognition/objects_filtered" to="/perception/object_recognition/objects_filtered"/>
+      </node>
+      <!-- object_info_publisher End-->
+
+
+      <!-- object_event_handler-->
+      <node pkg="object_event_handler" exec="object_event_node" name="object_event_node" output="screen">
+        <remap from="~/input/objects" to="/perception/object_recognition/objects_filtered" />
+        <remap from="~/output/object_event" to="/perception/object_event" />
+      </node>
+      <!-- object_event_handler End-->
+
+  </group>
+
+
+  <group>
+
+    <push-ros-namespace namespace="planning"/>
+        <!-- costmap_gengerator -->
+        <arg name="vehicle_param_file" default="$(find-pkg-share racing_kart_description)/config/vehicle_info.param.yaml"/>
+
+        <include file="$(find-pkg-share costmap_generator)/launch/costmap_generator.launch.xml">
+            <arg name="input_objects" value="/perception/object_recognition/objects_filtered"/>
+            <arg name="input_points_no_ground" value="/perception/obstacle_segmentation/pointcloud"/>
+            <arg name="input_lanelet_map" value="/map/vector_map"/>
+            <arg name="input_scenario" value="/planning/scenario_planning/scenario"/>
+            <arg name="input_object_change" value="/perception/object_event"/>
+            <arg name="output_grid_map" value="costmap_generator/grid_map"/>
+            <arg name="output_occupancy_grid" value="costmap_generator/occupancy_grid"/>
+            <arg name="vehicle_param_file" value="$(var vehicle_param_file)"/>
+        </include>
+        <!-- costmap_gengerator End -->
+
+        <!-- freespace_planner -->
+
+        <arg name="vehicle_param_file" default="$(find-pkg-share racing_kart_description)/config/vehicle_info.param.yaml"/>
+
+        <include file="$(find-pkg-share freespace_planner)/launch/freespace_planner.launch.xml">
+          <arg name="input_route" value="/planning/scenario_planning/route"/> 
+          <arg name="input_occupancy_grid" value="costmap_generator/occupancy_grid"/>
+          <arg name="input_scenario" value="/planning/scenario_planning/scenario"/>
+          <arg name="input_odometry" value="/localization/kinematic_state"/>
+          <arg name="output_trajectory" value="/planning/scenario_planning/freespace_planner/trajectory"/>
+          <arg name="is_completed" value="/planning/scenario_planning/parking/is_completed"/>
+          <arg name="param_file" value="$(find-pkg-share aichallenge_submit_launch)/param/planning/freespace_planner/freespace_planner.param.yaml"/>
+          <arg name="vehicle_param_file" value="$(var vehicle_param_file)"/>
+        </include>
+
+      <!-- freespace_planner  End -->
+
+      <!-- trajectory_selector -->
+
+      <node pkg="trajectory_selector" exec="trajectory_selector_node" name="trajectory_selector_node" output="screen">
+        <remap from="/scenario" to="/planning/scenario_planning/scenario"/>
+        <remap from="/status" to="/aichallenge/awsim/status"/>
+        <remap from="/trajectory_pit" to="/planning/scenario_planning/trajectory"/>
+        <!-- <remap from="/trajectory_lane" to="/planning/scenario_planning/avoidance/trajectory"/> -->
+        <remap from="/trajectory_lane" to="planning/scenario_planning/astar/trajectory"/>
+        <remap from="/trajectory_avoidance" to="/planning/scenario_planning/avoidance/trajectory"/>
+        <remap from="/selected_trajectory" to="/planning/scenario_planning/selected_trajectory"/>
+      </node>
+
+      <!-- trajectory_selector End -->
+
+      <!-- route_publisher -->
+
+      <node pkg="route_publisher" exec="route_publisher_node" name="route_publisher_node" output="screen">
+          <remap from="~/input/object_event" to="/perception/object_event"/>
+          <remap from="~/output/route" to="/planning/scenario_planning/route"/>
+          <remap from="~/input/kinematics" to="/localization/kinematic_state"/>
+          <param from="$(find-pkg-share route_publisher)/config/route_pose.yaml" />
+          
+      </node>
+
+      <!-- route_publisher End -->
+
+      <!-- trajectory_manager -->
+      <node pkg="trajectory_manager" exec="trajectory_manage_node" name="trajectory_manage_node" output="screen">
+        <remap from="~/input/trajectory" to="/planning/scenario_planning/freespace_planner/trajectory"/>
+        <remap from="~/input/route" to="/planning/scenario_planning/route"/>
+        <remap from="~/output/trajectory" to="/planning/scenario_planning/astar/trajectory"/>
+      </node>
+
+      <!-- trajectory_manager End -->
+
+
+    </group>
+
+    <group>
+
+        <push-ros-namespace namespace="pit"/>
+
+          <!-- Pit_Stop -->
+
+          <node pkg="pit_stop_package" exec="pit_stop_node" name="pit_stop_node" output="screen">
+
+              <param name="target_x" value="89626.3671875" />  
+              <param name="target_y" value="43134.921875" />  
+              <param name="threshold_distance" value="0.8" />
+
+              <remap from="/scenario" to="/planning/pit_stop/scenario"/>
+              <remap from="~/input/pit_status" to="/aichallenge/pitstop/status"/>
+              <remap from="~/input/kinematics" to="/localization/kinematic_state"/>
+              <remap from="/gear_command" to="/control/command/gear_cmd"/>
+          </node>
+
+          <!-- Pit_Stop End -->
+
+          <!-- scenario_pub_pkg -->
+
+          <node pkg="scenario_pub_pkg" exec="scenario_pub_node" name="scenario_pub_node" output="screen">
+
+              <param name="ConditionThreshold" value="1000" />  <!-- pit stopのフラグをたてるしきい値 -->
+              <param name="UseStatusCondition" value="false" />  <!-- sectionの値をpit stopフラグに利用するかどうか。true: secton 8　かつ condition>=1000のときpit-->
+
+              <remap from="/condition" to="/aichallenge/pitstop/condition"/>
+              <remap from="/status" to="/aichallenge/awsim/status"/>
+              <remap from="/scenario" to="/planning/pit_stop/scenario"/>
+          </node>
+
+      <!-- scenario_pub_pkg End -->
+
+    </group>
+
+    <!-- section_event_handler -->
+
+    <ground>
+
+        <push-ros-namespace namespace="planning"/>
+
+            <node pkg="section_event_handler" exec="section_event_node" name="section_event_node" output="screen">
+
+                <remap from="~/input/status" to="/aichallenge/awsim/status"/>
+                <remap from="~/output/section_change" to="/planning/section_event"/>
+            </node>
+
+            <!-- section_event_handler End -->
+
+            <!-- static TF for costmap -->
+            <node pkg="tf2_ros" exec="static_transform_publisher" output="screen"
+                args="89633.15625 43127.80078125 42.195587158203125 0.004984998786902679 -0.010415014249405455 0.8738473964122314 0.4860631698131876 map static_base"/>
+
+            <!-- static TF for costmap End -->
+
+    </group>
+
+    <!-- MPC PID Controller -->
+  <group>
+    <push-ros-namespace namespace="control"/>
+    <group>
+      <push-ros-namespace namespace="trajectory_follower"/>
+        <arg name="enable_obstacle_collision_checker" default="true"/>
+        <arg name="lateral_controller_mode" default="mpc"/>
+        <arg name="longitudinal_controller_mode" default="pid"/>
+        <arg name="enable_autonomous_emergency_braking" default="true"/>
+        <arg name="check_external_emergency_heartbeat" default="true"/>
+        <arg name="trajectory_follower_mode" default="trajectory_follower_node"/>
+        <arg name="nearest_search_param_path" default="$(find-pkg-share aichallenge_submit_launch)/param/common/nearest_search.param.yaml"/>
+        <arg name="trajectory_follower_node_param_path" default="$(find-pkg-share aichallenge_submit_launch)/param/control/trajectory_follower_node.param.yaml"/>
+        <arg name="lon_controller_param_path" default="$(find-pkg-share aichallenge_submit_launch)/param/control/mpc.param.yaml"/>
+        <arg name="lat_controller_param_path" default="$(find-pkg-share aichallenge_submit_launch)/param/control/pid.param.yaml"/>
+        <arg name="vehicle_param_file" default="$(find-pkg-share racing_kart_description)/config/vehicle_info.param.yaml"/>
+        <arg name="use_sim_time" default="false"/>
+        
+        <node pkg="trajectory_follower_node" exec="controller_node_exe" name="controller" output="screen">
+
+          <remap from="~/input/reference_trajectory" to="/planning/scenario_planning/selected_trajectory"/>
+          <remap from="~/input/current_odometry" to="/localization/kinematic_state"/>
+          <remap from="~/input/current_steering" to="/vehicle/status/steering_status"/>
+          <remap from="~/input/current_accel" to="/localization/acceleration"/>
+          <remap from="~/input/current_operation_mode" to="/system/operation_mode/state"/>
+          <remap from="~/output/predicted_trajectory" to="lateral/predicted_trajectory"/>
+          <remap from="~/output/lateral_diagnostic" to="lateral/diagnostic"/>
+          <remap from="~/output/slope_angle" to="longitudinal/slope_angle"/>
+          <remap from="~/output/longitudinal_diagnostic" to="longitudinal/diagnostic"/>
+          <remap from="~/output/stop_reason" to="longitudinal/stop_reason"/>
+          <remap from="~/output/control_cmd" to="/control/command/control_cmd"/>
+          <param name="lateral_controller_mode" value="$(var lateral_controller_mode)"/>
+          <param name="longitudinal_controller_mode" value="$(var longitudinal_controller_mode)"/>
+          <param from="$(var nearest_search_param_path)"/>
+          <param from="$(var trajectory_follower_node_param_path)"/>
+          <param from="$(var lon_controller_param_path)"/>
+          <param from="$(var lat_controller_param_path)"/>
+          <param from="$(var vehicle_param_file)"/>
+        </node>
+      </group>
+
+  </group>  
+  
+  <!--MPC PID Controller   End -->
+
+
+</launch>
