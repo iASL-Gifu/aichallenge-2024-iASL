@@ -6,8 +6,8 @@
     <push-ros-namespace namespace="perception"/>
       <!-- object_info_publisher-->
       <node pkg="object_info_publisher" exec="object_info_publisher_node" name="object_info_publisher_node" output="screen">
-        <param name="scale" value="0.7" />
-        <param name="scale_of3" value="0.5" />
+        <param name="scale" value="0.6" />
+        <param name="scale_of3" value="0.1" />
         <remap from="/perception/object_recognition/objects_filtered" to="/perception/object_recognition/objects_filtered"/>
       </node>
       <!-- object_info_publisher End-->

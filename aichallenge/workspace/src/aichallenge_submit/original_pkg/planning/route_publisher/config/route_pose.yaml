@@ -69,7 +69,7 @@
       orientation.z: -0.8788172006607056
       orientation.w: -0.47715866565704346
 
-    proximity_threshold_harf: 0.7
+    proximity_threshold_harf: 0.5
     proximity_threshold_goal: 1.5
     delay_route_publish_ms: 300
 
