@@ -71,6 +71,6 @@
 
     proximity_threshold_harf: 0.7
     proximity_threshold_goal: 1.5
-    delay_route_publish_ms: 300
+    delay_route_publish_ms: 0
 
       
