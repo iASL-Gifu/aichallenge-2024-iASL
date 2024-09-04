@@ -133,6 +133,10 @@ private:
   size_t target_index_;
   bool is_completed_ = false;
 
+  bool is_route_updated_;
+  bool is_costmap_updated_;
+  bool is_planning_required_;
+
   LaneletRoute::ConstSharedPtr route_;
   OccupancyGrid::ConstSharedPtr occupancy_grid_;
   Scenario::ConstSharedPtr scenario_;

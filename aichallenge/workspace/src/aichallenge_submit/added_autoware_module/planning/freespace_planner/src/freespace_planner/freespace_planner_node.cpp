@@ -314,6 +314,11 @@ PlannerCommonParam FreespacePlannerNode::getPlannerCommonParam()
 void FreespacePlannerNode::onRoute(const LaneletRoute::ConstSharedPtr msg)
 {
   route_ = msg;
+  is_route_updated_ = true;
+
+  if (is_route_updated_ && is_costmap_updated_) {
+    is_planning_required_ = true;
+  }
 
   start_pose_.header = msg->header;
   start_pose_.pose = msg->start_pose;
@@ -327,6 +332,11 @@ void FreespacePlannerNode::onRoute(const LaneletRoute::ConstSharedPtr msg)
 void FreespacePlannerNode::onOccupancyGrid(const OccupancyGrid::ConstSharedPtr msg)
 {
   occupancy_grid_ = msg;
+  is_costmap_updated_ = true;
+
+  if (is_route_updated_ && is_costmap_updated_) {
+    is_planning_required_ = true;
+  }
 }
 
 void FreespacePlannerNode::onScenario(const Scenario::ConstSharedPtr msg) { scenario_ = msg; }
@@ -450,8 +460,15 @@ void FreespacePlannerNode::onTimer()
 
     reset();
 
-    // Plan new trajectory
-    planTrajectory();
+    if (is_planning_required_) {
+      if (occupancy_grid_ && route_) {
+        planTrajectory();
+        is_planning_required_ = false;  // 一度計画したらフラグをリセット
+        is_route_updated_ = false;      // 再計画のためにルート更新フラグをリセット
+        is_costmap_updated_ = false;    // 再計画のためにコストマップ更新フラグをリセット
+      }
+    
+    }
   }
 
   // StopTrajectory
