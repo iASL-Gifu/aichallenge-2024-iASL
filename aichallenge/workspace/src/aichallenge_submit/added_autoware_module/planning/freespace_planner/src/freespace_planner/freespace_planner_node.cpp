@@ -326,8 +326,27 @@ void FreespacePlannerNode::onRoute(const LaneletRoute::ConstSharedPtr msg)
   goal_pose_.header = msg->header;
   goal_pose_.pose = msg->goal_pose;
 
+  RCLCPP_INFO_STREAM(get_logger(), "Start Pose: ["
+    << "Position: (" << start_pose_.pose.position.x << ", " 
+    << start_pose_.pose.position.y << ", " 
+    << start_pose_.pose.position.z << "), "
+    << "Orientation: (" << start_pose_.pose.orientation.x << ", " 
+    << start_pose_.pose.orientation.y << ", " 
+    << start_pose_.pose.orientation.z << ", "
+    << start_pose_.pose.orientation.w << ")");
+
+RCLCPP_INFO_STREAM(get_logger(), "Goal Pose: ["
+    << "Position: (" << goal_pose_.pose.position.x << ", " 
+    << goal_pose_.pose.position.y << ", " 
+    << goal_pose_.pose.position.z << "), "
+    << "Orientation: (" << goal_pose_.pose.orientation.x << ", " 
+    << goal_pose_.pose.orientation.y << ", " 
+    << goal_pose_.pose.orientation.z << ", "
+    << goal_pose_.pose.orientation.w << ")");
+
   reset();
 }
+
 
 void FreespacePlannerNode::onOccupancyGrid(const OccupancyGrid::ConstSharedPtr msg)
 {
