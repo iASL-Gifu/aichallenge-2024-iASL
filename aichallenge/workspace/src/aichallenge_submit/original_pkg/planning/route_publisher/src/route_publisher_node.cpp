@@ -55,19 +55,6 @@ public:
         this->get_parameter("goal_pose.orientation.z", goal_orientation_z_);
         this->get_parameter("goal_pose.orientation.w", goal_orientation_w_);
 
-        this->get_parameter("right_harf_pose.position.x", target_pose_x_);
-        this->get_parameter("right_harf_pose.position.y", target_pose_y_);
-
-        this->get_parameter("proximity_threshold", target_pose_r_);
-        this->get_parameter("delay_route_publish_ms", delay_time);
-
-        RCLCPP_INFO(this->get_logger(), "Left Harf Pose: x=%f, y=%f, z=%f, w=%f", left_harf_pose_x_, left_harf_pose_y_, left_harf_orientation_z_, left_harf_orientation_w_);
-        RCLCPP_INFO(this->get_logger(), "Center Harf Pose: x=%f, y=%f, z=%f, w=%f", center_harf_pose_x_, center_harf_pose_y_, center_harf_orientation_z_, center_harf_orientation_w_);
-        RCLCPP_INFO(this->get_logger(), "Right Harf Pose: x=%f, y=%f, z=%f, w=%f", right_harf_pose_x_, right_harf_pose_y_, right_harf_orientation_z_, right_harf_orientation_w_);
-        RCLCPP_INFO(this->get_logger(), "Goal Pose: x=%f, y=%f, z=%f, w=%f", goal_pose_x_, goal_pose_y_, goal_orientation_z_, goal_orientation_w_);
-        RCLCPP_INFO(this->get_logger(), "Target Pose: x=%f, y=%f", target_pose_x_, target_pose_y_);
-        RCLCPP_INFO(this->get_logger(), "Proximity Threshold: %f, Delay Time: %d", target_pose_r_, delay_time);
-
 
         // サブスクリプションの作成
         object_change_sub_ = this->create_subscription<std_msgs::msg::Int32>(
@@ -76,46 +63,85 @@ public:
                 this->handle_section_change(msg);
             });
 
-        // Odometryサブスクリプションの作成
-        sub_kinematics_ = create_subscription<nav_msgs::msg::Odometry>(
-            "~/input/kinematics", 1, [this](const nav_msgs::msg::Odometry::SharedPtr msg) { 
-                odometry_ = msg; 
-                check_proximity_and_publish(); 
-            });
-
-        // Publisherの作成
-        route_pub_ = this->create_publisher<autoware_planning_msgs::msg::LaneletRoute>(
-            "~/output/route", rclcpp::QoS{1}.transient_local());
-
         // PredictedObjectsをSubするサブスクライバの作成
         predicted_objects_sub_ = this->create_subscription<autoware_auto_perception_msgs::msg::PredictedObjects>(
             "~/input/objects", 10,
             [this](const autoware_auto_perception_msgs::msg::PredictedObjects::SharedPtr msg) {
                 this->predicted_objects_ = msg;
             });
+
+        // Publisherの作成
+        route_pub_ = this->create_publisher<autoware_planning_msgs::msg::LaneletRoute>(
+            "~/output/route", rclcpp::QoS{1}.transient_local());
     }
 
 private:
     void handle_section_change(const std_msgs::msg::Int32::SharedPtr msg)
     {
         current_section_ = msg->data;
-    }
 
-    void check_proximity_and_publish()
-    {
-        if (!odometry_) return;
-
-        // 現在位置を取得
-        double current_x = odometry_->pose.pose.position.x;
-        double current_y = odometry_->pose.pose.position.y;
-
-        double distance_to_goal = std::hypot(current_x - target_pose_x_, current_y - target_pose_y_);
-
-        // 距離が閾値より小さい場合にトリガーを引く
-        if (distance_to_goal < target_pose_r_)
+        // Objecteventが4の場合、障害物との距離を計算し、ハーフポーズを決定する
+        if (current_section_ == 4)
+        {
+            determine_harf_pose_based_on_obstacles();
+            publish_route();
+        }
+        // Objecteventが7の場合、直接ルートをパブリッシュする
+        else if (current_section_ == 7)
         {
             publish_route();
         }
+    }
+
+    void determine_harf_pose_based_on_obstacles()
+    {
+        if (!predicted_objects_)
+        {
+            RCLCPP_WARN(this->get_logger(), "No predicted objects data available.");
+            return;
+        }
+
+        // 各ハーフゴールポーズとの距離を比較
+        double max_distance = -1;
+        
+        // 障害物との距離を比較し、一番遠いポーズを選ぶ
+        double left_distance = calculate_min_distance_to_obstacles(left_harf_pose_x_, left_harf_pose_y_, predicted_objects_);
+        double center_distance = calculate_min_distance_to_obstacles(center_harf_pose_x_, center_harf_pose_y_, predicted_objects_);
+        double right_distance = calculate_min_distance_to_obstacles(right_harf_pose_x_, right_harf_pose_y_, predicted_objects_);
+
+
+        if (left_distance > max_distance)
+        {
+            max_distance = left_distance;
+            harf_pose_x_ = left_harf_pose_x_;
+            harf_pose_y_ = left_harf_pose_y_;
+            harf_orientation_z_ = left_harf_orientation_z_;
+            harf_orientation_w_ = left_harf_orientation_w_;
+            RCLCPP_INFO(this->get_logger(), "Left Harf Pose selected.");
+        }
+
+        if (center_distance > max_distance)
+        {
+            max_distance = center_distance;
+            harf_pose_x_ = center_harf_pose_x_;
+            harf_pose_y_ = center_harf_pose_y_;
+            harf_orientation_z_ = center_harf_orientation_z_;
+            harf_orientation_w_ = center_harf_orientation_w_;
+            RCLCPP_INFO(this->get_logger(), "Center Harf Pose selected.");
+        }
+
+        if (right_distance > max_distance)
+        {
+            max_distance = right_distance;
+            harf_pose_x_ = right_harf_pose_x_;
+            harf_pose_y_ = right_harf_pose_y_;
+            harf_orientation_z_ = right_harf_orientation_z_;
+            harf_orientation_w_ = right_harf_orientation_w_;
+            RCLCPP_INFO(this->get_logger(), "Right Harf Pose selected.");
+        }
+        
+        RCLCPP_INFO(this->get_logger(), ": left=%f, center=%f, right=%f ", left_distance, center_distance, right_distance);
+        
     }
 
     void publish_route()
@@ -123,54 +149,7 @@ private:
         auto route_msg = autoware_planning_msgs::msg::LaneletRoute();
         route_msg.header.frame_id = "map";
 
-        // 障害物の情報が保存されているか確認
-        if (predicted_objects_)
-        {
-            // 各ハーフゴールポーズの近くに障害物があるかを確認
-            bool left_harf_blocked = check_for_obstacle_near_pose(left_harf_pose_x_, left_harf_pose_y_, predicted_objects_);
-            bool center_harf_blocked = check_for_obstacle_near_pose(center_harf_pose_x_, center_harf_pose_y_, predicted_objects_);
-            bool right_harf_blocked = check_for_obstacle_near_pose(right_harf_pose_x_, right_harf_pose_y_, predicted_objects_);
-
-            // セクション3, 4, 5の場合、障害物を避けたハーフポーズをゴールに設定
-            if (current_section_ == 3)
-            {
-                if (!center_harf_blocked)
-                {
-                    harf_pose_x_ = center_harf_pose_x_;
-                    harf_pose_y_ = center_harf_pose_y_;
-                    harf_orientation_z_ = center_harf_orientation_z_;
-                    harf_orientation_w_ = center_harf_orientation_w_;
-                    RCLCPP_INFO(this->get_logger(), "Setting center harf_pose to Center Harf Pose: x=%f, y=%f, z=%f, w=%f", harf_pose_x_, harf_pose_y_, harf_orientation_z_, harf_orientation_w_);
-
-                }
-                else if (!left_harf_blocked)
-                {
-                    harf_pose_x_ = left_harf_pose_x_;
-                    harf_pose_y_ = left_harf_pose_y_;
-                    harf_orientation_z_ = left_harf_orientation_z_;
-                    harf_orientation_w_ = left_harf_orientation_w_;
-                    RCLCPP_INFO(this->get_logger(), "Setting left harf_pose to Center Harf Pose: x=%f, y=%f, z=%f, w=%f", harf_pose_x_, harf_pose_y_, harf_orientation_z_, harf_orientation_w_);
-
-                }
-                else if (!right_harf_blocked)
-                {
-                    harf_pose_x_ = right_harf_pose_x_;
-                    harf_pose_y_ = right_harf_pose_y_;
-                    harf_orientation_z_ = right_harf_orientation_z_;
-                    harf_orientation_w_ = right_harf_orientation_w_;
-                    RCLCPP_INFO(this->get_logger(), "Setting right harf_pose to Center Harf Pose: x=%f, y=%f, z=%f, w=%f", harf_pose_x_, harf_pose_y_, harf_orientation_z_, harf_orientation_w_);
-
-                }
-                else
-                {
-                    RCLCPP_WARN(this->get_logger(), "All harf poses are blocked by obstacles.");
-                }
-
-            }
-            
-        }
-
-        if (current_section_ == 3)
+        if (current_section_ == 4)
         {
             // スタートをGoalに、ゴールを選ばれたハーフポーズに設定
             route_msg.start_pose.position.x = goal_pose_x_;
@@ -182,15 +161,10 @@ private:
             route_msg.goal_pose.position.y = harf_pose_y_;
             route_msg.goal_pose.orientation.z = harf_orientation_z_;
             route_msg.goal_pose.orientation.w = harf_orientation_w_;
-
-            target_pose_x_ = goal_pose_x_;
-            target_pose_y_ = goal_pose_y_;
-
-            std::this_thread::sleep_for(std::chrono::milliseconds(delay_time));
         }
         else if (current_section_ == 7)
         {
-            // セクション7の場合、スタートをハーフポーズ、ゴールをGoalに設定
+            // スタートをハーフポーズ、ゴールをGoalに設定
             route_msg.start_pose.position.x = harf_pose_x_;
             route_msg.start_pose.position.y = harf_pose_y_;
             route_msg.start_pose.orientation.z = harf_orientation_z_;
@@ -200,30 +174,29 @@ private:
             route_msg.goal_pose.position.y = goal_pose_y_;
             route_msg.goal_pose.orientation.z = goal_orientation_z_;
             route_msg.goal_pose.orientation.w = goal_orientation_w_;
-
-            target_pose_x_ = harf_pose_x_;
-            target_pose_y_ = harf_pose_y_;
         }
 
         route_pub_->publish(route_msg);
+        RCLCPP_INFO(this->get_logger(), "Route published.");
     }
 
-    bool check_for_obstacle_near_pose(double pose_x, double pose_y, const autoware_auto_perception_msgs::msg::PredictedObjects::SharedPtr& msg)
+    double calculate_min_distance_to_obstacles(double pose_x, double pose_y, const autoware_auto_perception_msgs::msg::PredictedObjects::SharedPtr& msg)
     {
-        // 障害物が指定したポーズの近くにあるかを確認
+        double min_distance = std::numeric_limits<double>::max();
+
         for (const auto &object : msg->objects)
         {
             double object_x = object.kinematics.initial_pose_with_covariance.pose.position.x;
             double object_y = object.kinematics.initial_pose_with_covariance.pose.position.y;
 
             double distance = std::hypot(pose_x - object_x, pose_y - object_y);
-            if (distance < target_pose_r_)
+            if (distance < min_distance)
             {
-                RCLCPP_INFO(this->get_logger(), "Obstacle detected near pose: (%f, %f)", pose_x, pose_y);
-                return true;
+                min_distance = distance;
             }
         }
-        return false;
+
+        return min_distance;
     }
 
     // メンバ変数
@@ -232,15 +205,11 @@ private:
     double right_harf_pose_x_, right_harf_pose_y_, right_harf_orientation_z_, right_harf_orientation_w_;
     double goal_pose_x_, goal_pose_y_, goal_orientation_z_, goal_orientation_w_;
     double harf_pose_x_, harf_pose_y_, harf_orientation_z_, harf_orientation_w_;
-    double target_pose_x_, target_pose_y_, target_pose_r_;
-    int delay_time;
-    int current_section_ = 0;
-    nav_msgs::msg::Odometry::SharedPtr odometry_;
 
-    autoware_auto_perception_msgs::msg::PredictedObjects::SharedPtr predicted_objects_; // オブジェクト情報を保持
+    int current_section_ = 0;
+    autoware_auto_perception_msgs::msg::PredictedObjects::SharedPtr predicted_objects_;
 
     rclcpp::Subscription<std_msgs::msg::Int32>::SharedPtr object_change_sub_;
-    rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr sub_kinematics_;
     rclcpp::Publisher<autoware_planning_msgs::msg::LaneletRoute>::SharedPtr route_pub_;
     rclcpp::Subscription<autoware_auto_perception_msgs::msg::PredictedObjects>::SharedPtr predicted_objects_sub_;
 };
