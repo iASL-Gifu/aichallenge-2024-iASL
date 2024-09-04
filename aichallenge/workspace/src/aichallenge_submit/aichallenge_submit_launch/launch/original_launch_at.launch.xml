@@ -78,6 +78,7 @@
           <remap from="~/input/object_event" to="/perception/object_event"/>
           <remap from="~/output/route" to="/planning/scenario_planning/route"/>
           <remap from="~/input/kinematics" to="/localization/kinematic_state"/>
+          <remap from="~/input/objects" to="/perception/object_recognition/objects_filtered"/>
           <param from="$(find-pkg-share route_publisher)/config/route_pose.yaml" />
           
       </node>
