@@ -314,6 +314,11 @@ PlannerCommonParam FreespacePlannerNode::getPlannerCommonParam()
 void FreespacePlannerNode::onRoute(const LaneletRoute::ConstSharedPtr msg)
 {
   route_ = msg;
+  is_route_updated_ = true;
+
+  if (is_route_updated_ && is_costmap_updated_) {
+    is_planning_required_ = true;
+  }
 
   start_pose_.header = msg->header;
   start_pose_.pose = msg->start_pose;
@@ -321,12 +326,36 @@ void FreespacePlannerNode::onRoute(const LaneletRoute::ConstSharedPtr msg)
   goal_pose_.header = msg->header;
   goal_pose_.pose = msg->goal_pose;
 
+  RCLCPP_INFO_STREAM(get_logger(), "Start Pose: ["
+    << "Position: (" << start_pose_.pose.position.x << ", " 
+    << start_pose_.pose.position.y << ", " 
+    << start_pose_.pose.position.z << "), "
+    << "Orientation: (" << start_pose_.pose.orientation.x << ", " 
+    << start_pose_.pose.orientation.y << ", " 
+    << start_pose_.pose.orientation.z << ", "
+    << start_pose_.pose.orientation.w << ")");
+
+RCLCPP_INFO_STREAM(get_logger(), "Goal Pose: ["
+    << "Position: (" << goal_pose_.pose.position.x << ", " 
+    << goal_pose_.pose.position.y << ", " 
+    << goal_pose_.pose.position.z << "), "
+    << "Orientation: (" << goal_pose_.pose.orientation.x << ", " 
+    << goal_pose_.pose.orientation.y << ", " 
+    << goal_pose_.pose.orientation.z << ", "
+    << goal_pose_.pose.orientation.w << ")");
+
   reset();
 }
+
 
 void FreespacePlannerNode::onOccupancyGrid(const OccupancyGrid::ConstSharedPtr msg)
 {
   occupancy_grid_ = msg;
+  is_costmap_updated_ = true;
+
+  if (is_route_updated_ && is_costmap_updated_) {
+    is_planning_required_ = true;
+  }
 }
 
 void FreespacePlannerNode::onScenario(const Scenario::ConstSharedPtr msg) { scenario_ = msg; }
@@ -450,8 +479,15 @@ void FreespacePlannerNode::onTimer()
 
     reset();
 
-    // Plan new trajectory
-    planTrajectory();
+    if (is_planning_required_) {
+      if (occupancy_grid_ && route_) {
+        planTrajectory();
+        is_planning_required_ = false;  // 一度計画したらフラグをリセット
+        is_route_updated_ = false;      // 再計画のためにルート更新フラグをリセット
+        is_costmap_updated_ = false;    // 再計画のためにコストマップ更新フラグをリセット
+      }
+    
+    }
   }
 
   // StopTrajectory

@@ -11,9 +11,10 @@ find_package(rclcpp REQUIRED)
 find_package(std_msgs REQUIRED)
 find_package(autoware_planning_msgs REQUIRED)
 find_package(nav_msgs REQUIRED)
+find_package(autoware_auto_perception_msgs REQUIRED)
 
 add_executable(route_publisher_node src/route_publisher_node.cpp)
-ament_target_dependencies(route_publisher_node rclcpp  autoware_planning_msgs std_msgs nav_msgs)
+ament_target_dependencies(route_publisher_node rclcpp  autoware_planning_msgs std_msgs nav_msgs autoware_auto_perception_msgs)
 install(TARGETS route_publisher_node
   DESTINATION lib/${PROJECT_NAME})
 
