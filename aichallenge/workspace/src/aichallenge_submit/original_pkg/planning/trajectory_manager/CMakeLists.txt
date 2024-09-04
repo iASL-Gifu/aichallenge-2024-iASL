@@ -10,10 +10,12 @@ find_package(rclcpp REQUIRED)
 find_package(std_msgs REQUIRED)
 find_package(autoware_auto_planning_msgs REQUIRED)
 find_package(autoware_planning_msgs REQUIRED)
+find_package(nav_msgs REQUIRED)
+find_package(tf2_geometry_msgs REQUIRED)
 
 add_executable(trajectory_manage_node src/trajectory_manage_node.cpp)
 
-ament_target_dependencies(trajectory_manage_node rclcpp std_msgs autoware_auto_planning_msgs autoware_planning_msgs)
+ament_target_dependencies(trajectory_manage_node rclcpp std_msgs autoware_auto_planning_msgs autoware_planning_msgs nav_msgs tf2_geometry_msgs)
 
 install(TARGETS
   trajectory_manage_node
