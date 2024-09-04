@@ -6,8 +6,8 @@
     <push-ros-namespace namespace="perception"/>
       <!-- object_info_publisher-->
       <node pkg="object_info_publisher" exec="object_info_publisher_node" name="object_info_publisher_node" output="screen">
-        <param name="scale" value="0.7" />
-        <param name="scale_of3" value="0.5" />
+        <param name="scale" value="0.1" />
+        <param name="scale_of3" value="0.1" />
         <remap from="/perception/object_recognition/objects_filtered" to="/perception/object_recognition/objects_filtered"/>
       </node>
       <!-- object_info_publisher End-->
@@ -77,19 +77,35 @@
       <node pkg="route_publisher" exec="route_publisher_node" name="route_publisher_node" output="screen">
           <remap from="~/input/object_event" to="/perception/object_event"/>
           <remap from="~/output/route" to="/planning/scenario_planning/route"/>
-          <remap from="~/input/kinematics" to="/localization/kinematic_state"/>
           <remap from="~/input/objects" to="/perception/object_recognition/objects_filtered"/>
           <param from="$(find-pkg-share route_publisher)/config/route_pose.yaml" />
           
       </node>
 
+
+      
+
       <!-- route_publisher End -->
+
+      <!-- route_visualizer -->
+      <node pkg="route_visualizer" exec="route_visualizer_node" name="route_visualizer_node" output="screen">
+          <remap from="~/output/goal_marker" to="/planning/scenario/route_marker"/>
+          <remap from="~/input/route" to="/planning/scenario_planning/route"/>
+          
+      </node>
+
+      <!-- route_visualizer End -->
 
       <!-- trajectory_manager -->
       <node pkg="trajectory_manager" exec="trajectory_manage_node" name="trajectory_manage_node" output="screen">
         <remap from="~/input/trajectory" to="/planning/scenario_planning/freespace_planner/trajectory"/>
         <remap from="~/input/route" to="/planning/scenario_planning/route"/>
+        <remap from="~/input/kinematics" to="/localization/kinematic_state" />
         <remap from="~/output/trajectory" to="/planning/scenario_planning/astar/trajectory"/>
+        <remap from="~/output/goal_marker" to="/planning/scenario/target_marker" />
+        
+
+        <param name="distance_threshold" value="3.0" />
       </node>
 
       <!-- trajectory_manager End -->

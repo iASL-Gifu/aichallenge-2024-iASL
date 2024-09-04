@@ -5,9 +5,6 @@ Panels:
     Property Tree Widget:
       Expanded:
         - /Sensing1/LiDAR1/ConcatenatePointCloud1/Autocompute Value Bounds1
-        - /Map2
-        - /Map3
-        - /Path1
       Splitter Ratio: 0.557669460773468
     Tree Height: 159
   - Class: rviz_common/Selection
@@ -801,11 +798,7 @@ Visualization Manager:
               Enabled: true
               Name: RouteArea
               Namespaces:
-                goal_lanelets: true
-                lane_start_bound: false
-                left_lane_bound: false
-                right_lane_bound: false
-                route_lanelets: true
+                {}
               Topic:
                 Depth: 5
                 Durability Policy: Transient Local
@@ -1208,8 +1201,7 @@ Visualization Manager:
                       Enabled: true
                       Name: Bound
                       Namespaces:
-                        left_bound: true
-                        right_bound: true
+                        {}
                       Topic:
                         Depth: 5
                         Durability Policy: Volatile
@@ -2237,7 +2229,7 @@ Visualization Manager:
       Enabled: true
       Name: MarkerArray
       Namespaces:
-        "": true
+        {}
       Topic:
         Depth: 1
         Durability Policy: Transient Local
@@ -2257,13 +2249,13 @@ Visualization Manager:
         Filter size: 10
         History Policy: Keep Last
         Reliability Policy: Reliable
-        Value: /ogm/map
+        Value: /planning/costmap_generator/occupancy_grid
       Update Topic:
         Depth: 5
         Durability Policy: Volatile
         History Policy: Keep Last
         Reliability Policy: Reliable
-        Value: /ogm/map_updates
+        Value: /planning/costmap_generator/occupancy_grid_updates
       Use Timestamp: false
       Value: true
     - Alpha: 0.699999988079071
@@ -2326,7 +2318,7 @@ Visualization Manager:
         Filter size: 10
         History Policy: Keep Last
         Reliability Policy: Reliable
-        Value: /planning/scenario/route_marker
+        Value: /planning/scenario/target_marker
       Value: true
   Enabled: true
   Global Options:
