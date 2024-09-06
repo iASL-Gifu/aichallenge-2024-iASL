@@ -7,18 +7,18 @@
     th_stopped_time_sec: 1.0
     th_stopped_velocity_mps: 0.01
     th_course_out_distance_m: 1.0
-    vehicle_shape_margin_m: 1.5
+    vehicle_shape_margin_m: 2.0
     replan_when_obstacle_found: false
     replan_when_course_out: false
 
     time_limit: 1000000.0
-    minimum_turning_radius: 5.0
+    minimum_turning_radius: 3.0
     maximum_turning_radius: 15.0
     turning_radius_size: 15
 
     theta_size: 90
     angle_goal_range: 6.0
-    curve_weight: 1.5 #1.2
+    curve_weight: 10.0 #1.2
     reverse_weight: 2.0
     lateral_goal_range: 1.0
     longitudinal_goal_range: 3.0

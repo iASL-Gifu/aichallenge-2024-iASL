@@ -37,13 +37,34 @@ public:
 
 private:
   void trajectoryCallback(const autoware_auto_planning_msgs::msg::Trajectory::SharedPtr msg)
+{
+  if (planning_active_) 
   {
-    if (planning_active_) 
-    {
-      last_trajectory_ = std::make_shared<autoware_auto_planning_msgs::msg::Trajectory>(*msg);
-      planning_active_ = false;  // Disable further planning until the trajectory is published
+    last_trajectory_ = std::make_shared<autoware_auto_planning_msgs::msg::Trajectory>(*msg);
+    planning_active_ = false;  // Disable further planning until the trajectory is published
+    
+    // デバッグ用：Trajectoryのはじめの点を出力
+    if (!last_trajectory_->points.empty()) {
+      const auto &first_point = last_trajectory_->points.front();
+      RCLCPP_INFO(this->get_logger(), 
+        "First Trajectory Point - Position: x: %f, y: %f, z: %f | Orientation: x: %f, y: %f, z: %f, w: %f",
+        first_point.pose.position.x,
+        first_point.pose.position.y,
+        first_point.pose.position.z,
+        first_point.pose.orientation.x,
+        first_point.pose.orientation.y,
+        first_point.pose.orientation.z,
+        first_point.pose.orientation.w);
+    } else {
+      RCLCPP_WARN(this->get_logger(), "Received trajectory is empty.");
     }
+
+    RCLCPP_INFO(this->get_logger(), "Trajectory is ready.");
+  } else {
+    // RCLCPP_INFO(this->get_logger(), "planning false.");
   }
+}
+
 
   void routeCallback(const autoware_planning_msgs::msg::LaneletRoute::SharedPtr msg)
   {
@@ -78,7 +99,15 @@ private:
         trajectory_publisher_->publish(*last_trajectory_);
         last_trajectory_.reset();  // Reset after publishing
         planning_active_ = true;   // Reactivate planning
-        RCLCPP_INFO(this->get_logger(), "Trajectory published.");
+        RCLCPP_INFO(this->get_logger(), 
+          "Current Goal Pose - Position: x: %f, y: %f, z: %f | Orientation: x: %f, y: %f, z: %f, w: %f",
+          current_goal_pose_->position.x,
+          current_goal_pose_->position.y,
+          current_goal_pose_->position.z,
+          current_goal_pose_->orientation.x,
+          current_goal_pose_->orientation.y,
+          current_goal_pose_->orientation.z,
+          current_goal_pose_->orientation.w);
 
         // If a new pending goal is available, update current goal
         if (pending_goal_pose_)
@@ -94,7 +123,7 @@ private:
       }
       else
       {
-        RCLCPP_INFO(this->get_logger(), "Trajectory not published, distance to goal: %f", distance_to_goal);
+        // RCLCPP_INFO(this->get_logger(), "Trajectory not published, distance to goal: %f", distance_to_goal);
       }
     }
   }

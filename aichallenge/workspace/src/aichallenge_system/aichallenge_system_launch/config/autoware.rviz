@@ -5,6 +5,7 @@ Panels:
     Property Tree Widget:
       Expanded:
         - /Sensing1/LiDAR1/ConcatenatePointCloud1/Autocompute Value Bounds1
+        - /Planning1
       Splitter Ratio: 0.557669460773468
     Tree Height: 159
   - Class: rviz_common/Selection
@@ -798,7 +799,11 @@ Visualization Manager:
               Enabled: true
               Name: RouteArea
               Namespaces:
-                {}
+                goal_lanelets: true
+                lane_start_bound: true
+                left_lane_bound: true
+                right_lane_bound: true
+                route_lanelets: true
               Topic:
                 Depth: 5
                 Durability Policy: Transient Local
@@ -1201,7 +1206,8 @@ Visualization Manager:
                       Enabled: true
                       Name: Bound
                       Namespaces:
-                        {}
+                        left_bound: true
+                        right_bound: true
                       Topic:
                         Depth: 5
                         Durability Policy: Volatile
@@ -2229,7 +2235,7 @@ Visualization Manager:
       Enabled: true
       Name: MarkerArray
       Namespaces:
-        {}
+        "": true
       Topic:
         Depth: 1
         Durability Policy: Transient Local
@@ -2319,6 +2325,19 @@ Visualization Manager:
         History Policy: Keep Last
         Reliability Policy: Reliable
         Value: /planning/scenario/target_marker
+      Value: true
+    - Class: rviz_default_plugins/Marker
+      Enabled: true
+      Name: Marker
+      Namespaces:
+        {}
+      Topic:
+        Depth: 5
+        Durability Policy: Volatile
+        Filter size: 10
+        History Policy: Keep Last
+        Reliability Policy: Reliable
+        Value: /planning/scenario/route_marker
       Value: true
   Enabled: true
   Global Options:
@@ -2420,7 +2439,7 @@ Visualization Manager:
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Scale: 12.549076080322266
+      Scale: 12.15969467163086
       Target Frame: viewer
       Value: TopDownOrtho (rviz_default_plugins)
       X: 0

@@ -94,7 +94,7 @@ private:
 
         // Add additional details like shape or classification as needed
         object.shape.type = autoware_auto_perception_msgs::msg::Shape::CYLINDER;
-        if (i == 8)
+        if (i == 8 || i==16)
         {
           object.shape.dimensions.x = last_data_msg_->data[i + 3] * scale_3_; // Example: diameter -> dimensions
           object.shape.dimensions.y = last_data_msg_->data[i + 3] * scale_3_;

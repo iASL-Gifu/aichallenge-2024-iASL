@@ -482,6 +482,14 @@ void FreespacePlannerNode::onTimer()
     if (is_planning_required_) {
       if (occupancy_grid_ && route_) {
         planTrajectory();
+
+        // Update partial trajectory
+        updateTargetIndex();
+        partial_trajectory_ = getPartialTrajectory(trajectory_, prev_target_index_, target_index_);
+        trajectory_pub_->publish(partial_trajectory_);
+        debug_pose_array_pub_->publish(trajectory2PoseArray(trajectory_));
+        debug_partial_pose_array_pub_->publish(trajectory2PoseArray(partial_trajectory_));
+
         is_planning_required_ = false;  // 一度計画したらフラグをリセット
         is_route_updated_ = false;      // 再計画のためにルート更新フラグをリセット
         is_costmap_updated_ = false;    // 再計画のためにコストマップ更新フラグをリセット
@@ -495,14 +503,6 @@ void FreespacePlannerNode::onTimer()
     return;
   }
 
-  // Update partial trajectory
-  updateTargetIndex();
-  partial_trajectory_ = getPartialTrajectory(trajectory_, prev_target_index_, target_index_);
-
-  // Publish messages
-  trajectory_pub_->publish(partial_trajectory_);
-  debug_pose_array_pub_->publish(trajectory2PoseArray(trajectory_));
-  debug_partial_pose_array_pub_->publish(trajectory2PoseArray(partial_trajectory_));
 }
 
 void FreespacePlannerNode::planTrajectory()
